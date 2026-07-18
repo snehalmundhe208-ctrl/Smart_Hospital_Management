@@ -42,7 +42,7 @@ const AuditLogsDashboard = () => {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['auditStats'],
     queryFn: async () => {
-      const res = await axios.get('http://localhost:5000/api/audit/stats', {
+      const res = await axios.get('/api/audit/stats', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       return res.data;
@@ -58,7 +58,7 @@ const AuditLogsDashboard = () => {
       if (filterModule) params.append('module', filterModule);
       if (filterStatus) params.append('status', filterStatus);
       if (filterDays) params.append('days', filterDays);
-      const res = await axios.get(`http://localhost:5000/api/audit?${params.toString()}`, {
+      const res = await axios.get(`/api/audit?${params.toString()}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       return res.data;

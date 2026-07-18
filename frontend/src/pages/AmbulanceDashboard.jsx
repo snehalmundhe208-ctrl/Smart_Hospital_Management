@@ -12,7 +12,7 @@ const AmbulanceDashboard = () => {
   const { data: requests, isLoading } = useQuery({
     queryKey: ['ambulance'],
     queryFn: async () => {
-      const res = await axios.get('http://localhost:5000/api/hospital/ambulance', {
+      const res = await axios.get('/api/hospital/ambulance', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       return res.data;
@@ -21,7 +21,7 @@ const AmbulanceDashboard = () => {
 
   const createRequestMutation = useMutation({
     mutationFn: async (data) => {
-      const res = await axios.post('http://localhost:5000/api/hospital/ambulance', data, {
+      const res = await axios.post('/api/hospital/ambulance', data, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       return res.data;
@@ -35,7 +35,7 @@ const AmbulanceDashboard = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, driver_name, vehicle_number }) => {
-      const res = await axios.put(`http://localhost:5000/api/hospital/ambulance/${id}`, 
+      const res = await axios.put(`/api/hospital/ambulance/${id}`, 
         { status, driver_name, vehicle_number }, 
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );

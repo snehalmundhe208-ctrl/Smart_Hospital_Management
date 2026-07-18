@@ -10,7 +10,7 @@ const BloodBankDashboard = () => {
   const { data: bloodInventory, isLoading } = useQuery({
     queryKey: ['bloodBank'],
     queryFn: async () => {
-      const res = await axios.get('http://localhost:5000/api/hospital/blood-bank', {
+      const res = await axios.get('/api/hospital/blood-bank', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       return res.data;
@@ -19,7 +19,7 @@ const BloodBankDashboard = () => {
 
   const updateBloodMutation = useMutation({
     mutationFn: async ({ id, units_available }) => {
-      const res = await axios.put(`http://localhost:5000/api/hospital/blood-bank/${id}`, 
+      const res = await axios.put(`/api/hospital/blood-bank/${id}`, 
         { units_available }, 
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );

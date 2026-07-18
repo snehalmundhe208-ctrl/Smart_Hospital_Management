@@ -26,7 +26,7 @@ const WardsBedsDashboard = () => {
     queryKey: ['wards'],
     queryFn: async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/hospital/wards', getHeaders());
+        const res = await axios.get('/api/hospital/wards', getHeaders());
         return res.data;
       } catch { return []; }
     }
@@ -37,7 +37,7 @@ const WardsBedsDashboard = () => {
     queryFn: async () => {
       if (!selectedWard) return [];
       try {
-        const res = await axios.get(`http://localhost:5000/api/hospital/wards/${selectedWard}/beds`, getHeaders());
+        const res = await axios.get(`/api/hospital/wards/${selectedWard}/beds`, getHeaders());
         return res.data;
       } catch { return []; }
     },
@@ -47,8 +47,8 @@ const WardsBedsDashboard = () => {
   // Mutations - Wards
   const saveWardMutation = useMutation({
     mutationFn: async (data) => {
-      if (data.id) return axios.put(`http://localhost:5000/api/hospital/wards/${data.id}`, data, getHeaders());
-      return axios.post('http://localhost:5000/api/hospital/wards', data, getHeaders());
+      if (data.id) return axios.put(`/api/hospital/wards/${data.id}`, data, getHeaders());
+      return axios.post('/api/hospital/wards', data, getHeaders());
     },
     onSuccess: () => { 
       queryClient.invalidateQueries({ queryKey: ['wards'] }); 
@@ -59,7 +59,7 @@ const WardsBedsDashboard = () => {
   });
 
   const deleteWardMutation = useMutation({
-    mutationFn: async (id) => axios.delete(`http://localhost:5000/api/hospital/wards/${id}`, getHeaders()),
+    mutationFn: async (id) => axios.delete(`/api/hospital/wards/${id}`, getHeaders()),
     onSuccess: () => { 
       queryClient.invalidateQueries({ queryKey: ['wards'] }); 
       setSelectedWard(null); 
@@ -72,8 +72,8 @@ const WardsBedsDashboard = () => {
   const saveBedMutation = useMutation({
     mutationFn: async (data) => {
       const payload = { ...data, ward_id: selectedWard };
-      if (data.id) return axios.put(`http://localhost:5000/api/hospital/beds/${data.id}`, payload, getHeaders());
-      return axios.post('http://localhost:5000/api/hospital/beds', payload, getHeaders());
+      if (data.id) return axios.put(`/api/hospital/beds/${data.id}`, payload, getHeaders());
+      return axios.post('/api/hospital/beds', payload, getHeaders());
     },
     onSuccess: () => { 
       queryClient.invalidateQueries({ queryKey: ['beds', selectedWard] }); 
@@ -84,7 +84,7 @@ const WardsBedsDashboard = () => {
   });
 
   const deleteBedMutation = useMutation({
-    mutationFn: async (id) => axios.delete(`http://localhost:5000/api/hospital/beds/${id}`, getHeaders()),
+    mutationFn: async (id) => axios.delete(`/api/hospital/beds/${id}`, getHeaders()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['beds', selectedWard] });
       toast.success('Bed deleted successfully');
@@ -94,7 +94,7 @@ const WardsBedsDashboard = () => {
 
   const updateBedMutation = useMutation({
     mutationFn: async (data) => {
-      return axios.put(`http://localhost:5000/api/hospital/beds/${data.id}`, data, getHeaders());
+      return axios.put(`/api/hospital/beds/${data.id}`, data, getHeaders());
     },
     onSuccess: () => { 
       queryClient.invalidateQueries({ queryKey: ['beds', selectedWard] }); 

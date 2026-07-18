@@ -1,0 +1,21 @@
+const db = require('./src/config/DatabaseConfig');
+(async () => {
+  try {
+    await db.query('CREATE TABLE IF NOT EXISTS pharmacy_banners (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), title VARCHAR(255) NOT NULL, subtitle TEXT, button_text VARCHAR(100), image_url TEXT, is_active BOOLEAN DEFAULT true, display_order INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)');
+    console.log('Created pharmacy_banners table');
+    const cols = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'medicines'");
+    const hasDesc = cols.rows.some(r => r.column_name === 'description');
+    if (!hasDesc) await db.query('ALTER TABLE medicines ADD COLUMN description TEXT');
+    const hasSide = cols.rows.some(r => r.column_name === 'side_effects');
+    if (!hasSide) {
+      await db.query('ALTER TABLE medicines ADD COLUMN side_effects TEXT');
+      await db.query('ALTER TABLE medicines ADD COLUMN usage_instructions TEXT');
+      await db.query('ALTER TABLE medicines ADD COLUMN image_url TEXT');
+    }
+    console.log('Done');
+    process.exit(0);
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+})();

@@ -4,26 +4,55 @@ import { Activity, Shield, Users, ArrowRight, HeartPulse, Stethoscope, PhoneCall
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
+const fallbackTestimonials = [
+  { rating: 5, review: 'Amazing service and care. The doctors are very attentive!', first_name: 'Happy', last_name: 'Patient' },
+];
+
+const normalizeTestimonials = (payload) => {
+  if (Array.isArray(payload)) {
+    return payload.filter(Boolean).length > 0 ? payload.filter(Boolean) : fallbackTestimonials;
+  }
+
+  if (payload && typeof payload === 'object') {
+    if (Array.isArray(payload.data)) {
+      return payload.data.filter(Boolean).length > 0 ? payload.data.filter(Boolean) : fallbackTestimonials;
+    }
+
+    if (Array.isArray(payload.testimonials)) {
+      return payload.testimonials.filter(Boolean).length > 0 ? payload.testimonials.filter(Boolean) : fallbackTestimonials;
+    }
+
+    if (payload.review || payload.rating || payload.first_name || payload.last_name) {
+      return [payload];
+    }
+  }
+
+  if (payload === null || payload === undefined || payload === '') {
+    return fallbackTestimonials;
+  }
+
+  return fallbackTestimonials;
+};
+
 const Landing = () => {
   const [testimonials, setTestimonials] = useState([]);
 
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const { data } = await axios.get('/api/feedback/public');
-        if (data && data.length > 0) {
-           setTestimonials(data);
-        } else {
-           // Fallback if DB is empty
-           setTestimonials([{ rating: 5, review: 'Amazing service and care. The doctors are very attentive!', first_name: 'Happy', last_name: 'Patient' }]);
-        }
+        const response = await axios.get('/api/feedback/public');
+        const payload = response?.data;
+        setTestimonials(normalizeTestimonials(payload));
       } catch (error) {
         console.error(error);
-        setTestimonials([{ rating: 5, review: 'Amazing service and care. The doctors are very attentive!', first_name: 'Happy', last_name: 'Patient' }]);
+        setTestimonials(fallbackTestimonials);
       }
     };
+
     fetchTestimonials();
   }, []);
+
+  const visibleTestimonials = Array.isArray(testimonials) ? testimonials : fallbackTestimonials;
   return (
     <div className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
       {/* Navigation - Glassmorphism */}
@@ -275,14 +304,14 @@ const Landing = () => {
           <h2 className="text-3xl font-bold text-slate-900 mb-4">Patient Stories</h2>
           <p className="text-slate-600 text-lg mb-12">Hear what our patients have to say about NovaCare.</p>
           <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, index) => (
+            {visibleTestimonials.map((t, index) => (
               <div key={index} className="bg-slate-50 rounded-2xl p-8 border border-slate-100">
                 <div className="flex text-amber-400 mb-4 justify-center gap-1">
-                  {Array.from({ length: t.rating || 5 }, (_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                  {Array.from({ length: t?.rating || 5 }, (_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                 </div>
-                <p className="text-slate-600 italic mb-4">"{t.review}"</p>
-                <h4 className="font-bold text-slate-800">- {t.first_name} {t.last_name}</h4>
-                {t.doctor_first_name && <p className="text-xs text-slate-400 mt-1">Treated by Dr. {t.doctor_first_name}</p>}
+                <p className="text-slate-600 italic mb-4">"{t?.review || 'Exceptional care and a smooth experience from start to finish.'}"</p>
+                <h4 className="font-bold text-slate-800">- {t?.first_name || 'Happy'} {t?.last_name || 'Patient'}</h4>
+                {t?.doctor_first_name && <p className="text-xs text-slate-400 mt-1">Treated by Dr. {t.doctor_first_name}</p>}
               </div>
             ))}
           </div>

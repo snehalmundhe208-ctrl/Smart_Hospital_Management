@@ -17,7 +17,9 @@ const AdminMedicines = () => {
   const [stockTarget, setStockTarget] = useState(null);
   const [stockForm, setStockForm] = useState({ quantity: 1, type: 'add' });
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [medicineForm, setMedicineForm] = useState(emptyMedicine);
+  const [editingMedicine, setEditingMedicine] = useState(null);
   const [notice, setNotice] = useState('');
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,15 +72,34 @@ const AdminMedicines = () => {
     event.preventDefault();
     setSaving(true);
     try {
-      const { data } = await axios.post('/api/pharmacy/medicines', medicineForm, config);
-      setMedicines((current) => [...current, data].sort((a, b) => a.name.localeCompare(b.name)));
-      setNotice(`${data.name} added to inventory.`);
+      if (editingMedicine) {
+        const { data } = await axios.put(`/api/pharmacy/medicines/${editingMedicine.id}`, medicineForm, config);
+        setMedicines((current) => current.map(m => m.id === data.id ? data : m).sort((a, b) => a.name.localeCompare(b.name)));
+        setNotice(`${data.name} updated successfully.`);
+      } else {
+        const { data } = await axios.post('/api/pharmacy/medicines', medicineForm, config);
+        setMedicines((current) => [...current, data].sort((a, b) => a.name.localeCompare(b.name)));
+        setNotice(`${data.name} added to inventory.`);
+      }
       setMedicineForm(emptyMedicine);
+      setEditingMedicine(null);
       setIsAddOpen(false);
+      setIsEditOpen(false);
     } catch (error) {
-      setNotice(error.response?.data?.message || 'Unable to add medicine.');
+      setNotice(error.response?.data?.message || 'Unable to save medicine.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteMedicine = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this medicine?')) return;
+    try {
+      await axios.delete(`/api/pharmacy/medicines/${id}`, config);
+      setMedicines((current) => current.filter(m => m.id !== id));
+      setNotice('Medicine deleted successfully.');
+    } catch (error) {
+      setNotice(error.response?.data?.message || 'Unable to delete medicine.');
     }
   };
 
@@ -164,7 +185,7 @@ const AdminMedicines = () => {
               <div className="flex flex-wrap gap-3">
                 <button onClick={() => { setEditingBanner(null); setBannerForm(emptyBanner); setIsBannerModalOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/25 transition hover:bg-white/20"><ImageIcon className="h-4 w-4" /> Manage Banners</button>
                 <Link to="/pharmacy/orders" className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/25 transition hover:bg-white/20"><ClipboardList className="h-4 w-4" /> Prescription Orders</Link>
-                <button onClick={() => setIsAddOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400"><Plus className="h-4 w-4" /> Add Medicine</button>
+                <button onClick={() => { setEditingMedicine(null); setMedicineForm(emptyMedicine); setIsAddOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400"><Plus className="h-4 w-4" /> Add Medicine</button>
               </div>
             </div>
           </section>
@@ -312,7 +333,7 @@ const AdminMedicines = () => {
               </div>
             </div>
             <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left border-collapse"><thead><tr className="bg-slate-50 border-b border-slate-200"><th className="px-6 py-4 font-semibold text-sm text-slate-600">Medicine Name</th><th className="px-6 py-4 font-semibold text-sm text-slate-600">Category</th><th className="px-6 py-4 font-semibold text-sm text-slate-600">Stock</th><th className="px-6 py-4 font-semibold text-sm text-slate-600">Price</th><th className="px-6 py-4 font-semibold text-sm text-slate-600 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-100">
-              {filteredMedicines.map((medicine) => <tr key={medicine.id} className="hover:bg-slate-50 transition-colors"><td className="px-6 py-4 font-bold text-slate-800">{medicine.name}</td><td className="px-6 py-4 text-slate-600">{medicine.category || 'General'}</td><td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-bold ${Number(medicine.stock_quantity) === 0 ? 'bg-red-100 text-red-700' : Number(medicine.stock_quantity) <= Number(medicine.min_stock_level) ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>{medicine.stock_quantity} units</span></td><td className="px-6 py-4 text-slate-800 font-medium">${Number(medicine.unit_price).toFixed(2)}</td><td className="px-6 py-4 text-right"><button onClick={() => { setStockTarget(medicine); setStockForm({ quantity: 1, type: 'add' }); }} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-50"><Pencil className="h-4 w-4" /> Update Stock</button></td></tr>)}
+              {filteredMedicines.map((medicine) => <tr key={medicine.id} className="hover:bg-slate-50 transition-colors"><td className="px-6 py-4 font-bold text-slate-800">{medicine.name}</td><td className="px-6 py-4 text-slate-600">{medicine.category || 'General'}</td><td className="px-6 py-4"><span className={`px-3 py-1 rounded-full text-xs font-bold ${Number(medicine.stock_quantity) === 0 ? 'bg-red-100 text-red-700' : Number(medicine.stock_quantity) <= Number(medicine.min_stock_level) ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>{medicine.stock_quantity} units</span></td><td className="px-6 py-4 text-slate-800 font-medium">${Number(medicine.unit_price).toFixed(2)}</td><td className="px-6 py-4 text-right flex justify-end gap-2"><button onClick={() => { setStockTarget(medicine); setStockForm({ quantity: 1, type: 'add' }); }} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-50" title="Update Stock"><Boxes className="h-4 w-4" /></button><button onClick={() => { setEditingMedicine(medicine); setMedicineForm(medicine); setIsEditOpen(true); }} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-100" title="Edit"><Pencil className="h-4 w-4" /></button><button onClick={() => handleDeleteMedicine(medicine.id)} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50" title="Delete"><Trash2 className="h-4 w-4" /></button></td></tr>)}
             </tbody></table></div>
           </section>
         </div>
@@ -320,7 +341,7 @@ const AdminMedicines = () => {
 
       {stockTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"><form onSubmit={handleStockUpdate} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-6 flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-amber-700">Inventory adjustment</p><h2 className="text-xl font-extrabold text-slate-900">{stockTarget.name}</h2><p className="mt-1 text-sm text-slate-500">Current quantity: {stockTarget.stock_quantity} units</p></div><button type="button" aria-label="Close stock update" onClick={() => setStockTarget(null)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div><div className="grid grid-cols-2 gap-3"><label className={`cursor-pointer rounded-xl border p-3 text-sm font-bold ${stockForm.type === 'add' ? 'border-emerald-400 bg-emerald-50 text-emerald-800' : 'border-slate-200 text-slate-600'}`}><input className="sr-only" type="radio" name="stock-type" value="add" checked={stockForm.type === 'add'} onChange={(event) => setStockForm((current) => ({ ...current, type: event.target.value }))} />Receive stock</label><label className={`cursor-pointer rounded-xl border p-3 text-sm font-bold ${stockForm.type === 'subtract' ? 'border-rose-400 bg-rose-50 text-rose-800' : 'border-slate-200 text-slate-600'}`}><input className="sr-only" type="radio" name="stock-type" value="subtract" checked={stockForm.type === 'subtract'} onChange={(event) => setStockForm((current) => ({ ...current, type: event.target.value }))} />Dispense stock</label></div><label className="mt-5 block text-sm font-bold text-slate-700">Quantity<input required min="1" step="1" type="number" value={stockForm.quantity} onChange={(event) => setStockForm((current) => ({ ...current, quantity: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-slate-900 outline-none ring-primary-500 focus:ring-2" /></label><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStockTarget(null)} className="flex-1 rounded-xl bg-slate-100 px-4 py-3 font-bold text-slate-700 hover:bg-slate-200">Cancel</button><button disabled={saving} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-bold text-white hover:bg-amber-700 disabled:opacity-60"><Save className="h-4 w-4" />{saving ? 'Saving…' : 'Save Update'}</button></div></form></div>}
 
-      {isAddOpen && <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm"><form onSubmit={handleAddMedicine} className="my-6 w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-6 flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-amber-700">New inventory item</p><h2 className="text-xl font-extrabold text-slate-900">Add Medicine</h2></div><button type="button" aria-label="Close add medicine" onClick={() => setIsAddOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div><div className="grid gap-4 sm:grid-cols-2">{[['name', 'Medicine name', 'text'], ['category', 'Category', 'text'], ['manufacturer', 'Manufacturer', 'text'], ['unit_price', 'Unit price', 'number'], ['stock_quantity', 'Opening stock', 'number'], ['min_stock_level', 'Low-stock level', 'number'], ['expiry_date', 'Expiry date', 'date']].map(([field, label, type]) => <label key={field} className={`block text-sm font-bold text-slate-700 ${field === 'name' ? 'sm:col-span-2' : ''}`}>{label}<input required={['name', 'unit_price', 'stock_quantity'].includes(field)} min={type === 'number' ? '0' : undefined} step={field === 'unit_price' ? '0.01' : undefined} type={type} value={medicineForm[field]} onChange={(event) => setMedicineForm((current) => ({ ...current, [field]: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-slate-900 outline-none ring-primary-500 focus:ring-2" /></label>)}</div><div className="mt-6 flex gap-3"><button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 rounded-xl bg-slate-100 px-4 py-3 font-bold text-slate-700 hover:bg-slate-200">Cancel</button><button disabled={saving} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-bold text-white hover:bg-amber-700 disabled:opacity-60"><Plus className="h-4 w-4" />{saving ? 'Adding…' : 'Add Medicine'}</button></div></form></div>}
+      {(isAddOpen || isEditOpen) && <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm"><form onSubmit={handleAddMedicine} className="my-6 w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-6 flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-amber-700">{editingMedicine ? 'Update inventory item' : 'New inventory item'}</p><h2 className="text-xl font-extrabold text-slate-900">{editingMedicine ? 'Edit Medicine' : 'Add Medicine'}</h2></div><button type="button" aria-label="Close" onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div><div className="grid gap-4 sm:grid-cols-2">{[['name', 'Medicine name', 'text'], ['category', 'Category', 'text'], ['manufacturer', 'Manufacturer', 'text'], ['unit_price', 'Unit price', 'number'], ['stock_quantity', 'Opening stock', 'number'], ['min_stock_level', 'Low-stock level', 'number'], ['expiry_date', 'Expiry date', 'date']].map(([field, label, type]) => <label key={field} className={`block text-sm font-bold text-slate-700 ${field === 'name' ? 'sm:col-span-2' : ''}`}>{label}<input required={['name', 'unit_price', 'stock_quantity'].includes(field)} min={type === 'number' ? '0' : undefined} step={field === 'unit_price' ? '0.01' : undefined} type={type} value={medicineForm[field] || ''} onChange={(event) => setMedicineForm((current) => ({ ...current, [field]: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-slate-900 outline-none ring-primary-500 focus:ring-2" disabled={field === 'stock_quantity' && editingMedicine} /></label>)}</div><div className="mt-6 flex gap-3"><button type="button" onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }} className="flex-1 rounded-xl bg-slate-100 px-4 py-3 font-bold text-slate-700 hover:bg-slate-200">Cancel</button><button disabled={saving} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-bold text-white hover:bg-amber-700 disabled:opacity-60"><Save className="h-4 w-4" />{saving ? 'Saving…' : (editingMedicine ? 'Update Medicine' : 'Add Medicine')}</button></div></form></div>}
       
       {isBannerModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm">

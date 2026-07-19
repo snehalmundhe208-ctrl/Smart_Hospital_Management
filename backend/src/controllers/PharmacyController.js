@@ -374,6 +374,63 @@ const createStoreOrder = async (req, res) => {
   }
 };
 
+const updateMedicine = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, category, manufacturer, unit_price, stock_quantity, min_stock_level, expiry_date, barcode, description, dosage_information, image_url } = req.body;
+    
+    if (!name || Number(unit_price) < 0) {
+      return res.status(400).json({ message: 'Medicine name and a valid price are required' });
+    }
+
+    const checkRes = await db.query('SELECT * FROM medicines WHERE id = $1', [id]);
+    if (checkRes.rows.length === 0) {
+      return res.status(404).json({ message: 'Medicine not found' });
+    }
+
+    const result = await db.query(`
+      UPDATE medicines
+      SET name = $1, category = $2, manufacturer = $3, unit_price = $4, stock_quantity = $5, min_stock_level = $6, expiry_date = $7, barcode = $8, description = $9, dosage_information = $10, image_url = $11
+      WHERE id = $12 RETURNING *
+    `, [name.trim(), category || null, manufacturer || null, Number(unit_price), Number(stock_quantity) || 0, Number(min_stock_level) || 10, expiry_date || null, barcode || null, description || null, dosage_information || null, image_url || null, id]);
+
+    await logActivity(req.user.id, 'MEDICINE_UPDATED', `Updated medicine ${name}`, {
+      module: 'PHARMACY',
+      ipAddress: req.ip,
+      device: req.headers['user-agent']
+    });
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const deleteMedicine = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const checkRes = await db.query('SELECT * FROM medicines WHERE id = $1', [id]);
+    if (checkRes.rows.length === 0) {
+      return res.status(404).json({ message: 'Medicine not found' });
+    }
+
+    await db.query('DELETE FROM medicines WHERE id = $1', [id]);
+
+    await logActivity(req.user.id, 'MEDICINE_DELETED', `Deleted medicine ${checkRes.rows[0].name}`, {
+      module: 'PHARMACY',
+      ipAddress: req.ip,
+      device: req.headers['user-agent']
+    });
+
+    res.json({ message: 'Medicine deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error. Ensure medicine is not used in prescriptions.' });
+  }
+};
+
 module.exports = {
   getMedicines,
   addMedicine,
@@ -383,4 +440,6 @@ module.exports = {
   getMedicineOrders,
   updateMedicineOrderStatus,
   createStoreOrder,
+  updateMedicine,
+  deleteMedicine,
 };

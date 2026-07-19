@@ -9,6 +9,8 @@ const {
   getMedicineOrders,
   updateMedicineOrderStatus,
   createStoreOrder,
+  updateMedicine,
+  deleteMedicine,
 } = require('../controllers/PharmacyController');
 const { protect, authorize } = require('../middleware/AuthMiddleware');
 
@@ -17,7 +19,8 @@ router.route('/medicines')
   .post(protect, authorize('ADMIN'), addMedicine);
 
 router.put('/medicines/:id/stock', protect, authorize('ADMIN', 'PHARMACY'), updateStock);
-
+router.put('/medicines/:id', protect, authorize('ADMIN'), updateMedicine);
+router.delete('/medicines/:id', protect, authorize('ADMIN'), deleteMedicine);
 router.get('/prescription-medicines', protect, authorize('PATIENT'), getPrescriptionMedicineOptions);
 router.get('/orders', protect, authorize('ADMIN', 'PHARMACY', 'PATIENT'), getMedicineOrders);
 router.post('/orders', protect, authorize('PATIENT'), createPrescriptionOrder);

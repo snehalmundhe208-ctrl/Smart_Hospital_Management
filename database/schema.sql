@@ -253,4 +253,4 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     details TEXT,
     ip_address VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);C
+);

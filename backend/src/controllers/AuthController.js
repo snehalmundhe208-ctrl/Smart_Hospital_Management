@@ -111,8 +111,9 @@ const getMe = async (req, res) => {
 const updateProfile = async (req, res) => {
   const { first_name, last_name, phone, dob, gender, address, emergency_contact, profile_image_url, password } = req.body;
   try {
+    const validDob = dob ? dob : null;
     let query = 'UPDATE users SET first_name = $1, last_name = $2, phone = $3, dob = $4, gender = $5, address = $6, emergency_contact = $7, profile_image_url = $8';
-    let values = [first_name, last_name, phone, dob, gender, address, emergency_contact, profile_image_url];
+    let values = [first_name, last_name, phone, validDob, gender, address, emergency_contact, profile_image_url];
     
     if (password) {
       const salt = await bcrypt.genSalt(10);

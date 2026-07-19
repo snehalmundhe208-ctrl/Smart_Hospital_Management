@@ -13,7 +13,13 @@ const AdminSettings = () => {
     if (saved) setSettings({ ...defaultSettings, ...JSON.parse(saved) });
   }, []);
 
-  const toggle = (key) => setSettings((current) => ({ ...current, [key]: !current[key] }));
+  const toggle = (key) => {
+    setSettings((current) => {
+      const updated = { ...current, [key]: !current[key] };
+      localStorage.setItem('novacare-settings', JSON.stringify(updated));
+      return updated;
+    });
+  };
   const saveSettings = () => {
     localStorage.setItem('novacare-settings', JSON.stringify(settings));
     setNotice('Settings saved for this browser.');

@@ -47,7 +47,7 @@ const AdminDashboard = () => {
           title: log.action,
           desc: log.details,
           type: log.module,
-          status: log.status,
+          status: log.status && log.status !== 'UNKNOWN' ? log.status : (log.action.toUpperCase().includes('FAIL') || log.action.toUpperCase().includes('ERROR') ? 'FAILED' : 'COMPLETED'),
           user: log.first_name ? `${log.first_name} ${log.last_name}` : 'System'
         }));
 
@@ -222,7 +222,7 @@ const AdminDashboard = () => {
                           <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name.toUpperCase()] || '#8b5cf6'} />
                         ))}
                       </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} formatter={(value) => [value, 'Appointments']} />
+                      <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px' }} itemStyle={{ color: '#0f172a', fontWeight: 'bold' }} formatter={(value) => [value, 'Appointments']} />
                       <Legend verticalAlign="bottom" height={36} iconType="circle" />
                     </PieChart>
                   </ResponsiveContainer>

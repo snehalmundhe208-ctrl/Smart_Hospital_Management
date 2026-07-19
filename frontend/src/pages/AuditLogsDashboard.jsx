@@ -6,7 +6,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, Download, Activity, CheckCircle2, XCircle, AlertCircle, Clock, Eye, X, RefreshCw, Smartphone, Globe, Code, Users } from 'lucide-react';
 import { format } from 'date-fns';
 
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status, action = '' }) => {
+  let finalStatus = status;
+  if (!finalStatus || finalStatus === 'UNKNOWN') {
+    const act = action.toUpperCase();
+    if (act.includes('FAIL') || act.includes('ERROR')) finalStatus = 'FAILED';
+    else if (act.includes('DELETE') || act.includes('REMOVE')) finalStatus = 'WARNING';
+    else if (act.includes('UPDATE') || act.includes('EDIT')) finalStatus = 'INFO';
+    else finalStatus = 'SUCCESS';
+  }
   const styles = {
     SUCCESS: 'bg-green-500/10 text-green-700 border-green-500/20',
     FAILED: 'bg-red-500/10 text-red-700 border-red-500/20',
@@ -15,8 +23,8 @@ const StatusBadge = ({ status }) => {
   };
   const defaultStyle = 'bg-slate-500/10 text-slate-700 border-slate-500/20';
   return (
-    <span className={`px-2.5 py-1 text-xs font-semibold rounded-md border ${styles[status] || defaultStyle}`}>
-      {status || 'UNKNOWN'}
+    <span className={`px-2.5 py-1 text-xs font-semibold rounded-md border ${styles[finalStatus] || defaultStyle}`}>
+      {finalStatus}
     </span>
   );
 };
@@ -161,7 +169,7 @@ const AuditLogsDashboard = () => {
                     <td className="px-4 py-3"><ModuleBadge module={log.module} /></td>
                     <td className="px-4 py-3 font-bold text-slate-700">{log.action}</td>
                     <td className="px-4 py-3 truncate max-w-[300px] text-slate-600" title={log.details}>{log.details}</td>
-                    <td className="px-4 py-3"><StatusBadge status={log.status} /></td>
+                    <td className="px-4 py-3"><StatusBadge status={log.status} action={log.action} /></td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => setSelectedLog(log)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100">
                         <Eye className="w-4 h-4" />
@@ -210,7 +218,7 @@ const AuditLogsDashboard = () => {
               <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
                 <div>
                   <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-                    Audit Log Details <StatusBadge status={selectedLog.status} />
+                    Audit Log Details <StatusBadge status={selectedLog.status} action={selectedLog.action} />
                   </h3>
                   <p className="text-sm text-slate-500 mt-1 font-medium">{format(new Date(selectedLog.created_at), 'PPPP ppp')}</p>
                 </div>
@@ -314,7 +322,7 @@ const TimelineView = ({ logs, onViewDetails }) => (
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
               <div className="font-extrabold text-slate-800 flex items-center gap-3">
                 {log.first_name ? `${log.first_name} ${log.last_name}` : 'System'}
-                <StatusBadge status={log.status} />
+                <StatusBadge status={log.status} action={log.action} />
               </div>
               <ModuleBadge module={log.module} />
             </div>

@@ -51,6 +51,18 @@ export const AuthProvider = ({ children }) => {
     };
 
     checkUserLoggedIn();
+
+    const handleAuthUpdated = () => {
+      const updatedUser = localStorage.getItem('user');
+      if (updatedUser) {
+        setUser(JSON.parse(updatedUser));
+      } else {
+        checkUserLoggedIn();
+      }
+    };
+
+    window.addEventListener('auth_updated', handleAuthUpdated);
+    return () => window.removeEventListener('auth_updated', handleAuthUpdated);
   }, []);
 
   const login = async (email, password) => {

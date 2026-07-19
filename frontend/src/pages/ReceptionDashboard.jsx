@@ -296,7 +296,7 @@ const ReceptionDashboard = () => {
                               <div className="bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
                                 <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Assigned Doctor</p>
                                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                  <ProfileAvatar user={{ first_name: apt.doctor_first_name, last_name: apt.doctor_last_name }} className="w-6 h-6 rounded-md" />
+                                  <ProfileAvatar user={{ first_name: apt.doctor_first_name, last_name: apt.doctor_last_name, profile_image_url: apt.doctor_profile_image_url }} className="w-6 h-6 rounded-md" />
                                   Dr. {apt.doctor_first_name} {apt.doctor_last_name}
                                 </p>
                               </div>

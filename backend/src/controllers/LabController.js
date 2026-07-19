@@ -75,7 +75,7 @@ const createLabRequest = async (req, res) => {
       await db.query(`
         INSERT INTO invoice_items (invoice_id, description, amount, type)
         VALUES ($1, $2, $3, 'LAB_TEST')
-      `, [invoiceId, \`Lab Test: \${testName}\`, labTestPrice]);
+      `, [invoiceId, `Lab Test: ${testName}`, labTestPrice]);
 
       const result = await db.query(`
         INSERT INTO lab_requests (appointment_id, patient_id, doctor_id, test_name, notes, priority, status, invoice_id)

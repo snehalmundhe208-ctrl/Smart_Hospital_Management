@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ProfileAvatar = ({ user, className = 'w-10 h-10', fallbackClassName = 'bg-primary-100 text-primary-700', alt }) => {
   const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [user?.profile_image_url]);
+
   const initials = `${user?.first_name?.charAt(0) || ''}${user?.last_name?.charAt(0) || ''}` || 'NC';
   const label = alt || `${user?.first_name || 'NovaCare'} ${user?.last_name || 'user'}`;
 

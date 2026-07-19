@@ -51,7 +51,7 @@ const PatientDashboard = () => {
         // Fetch lab reports
         const { data: labData } = await axios.get('/api/lab/requests', config);
         if(isMounted) {
-           setLabReports(labData.filter(r => r.report_url).slice(0, 3));
+           setLabReports(labData.slice(0, 3)); // show timeline, not just finished reports
         }
       } catch (error) {
         console.error('Error fetching dashboard stats', error);
@@ -346,17 +346,23 @@ const PatientDashboard = () => {
                           </div>
                         </div>
                         <div className="text-right flex flex-col items-end gap-2">
-                          <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">
-                            {report.status}
+                          <span className={`text-[10px] px-2 py-1 rounded-full font-bold ${report.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {report.status.replace('_', ' ')}
                           </span>
-                          <a 
-                            href={report.report_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[10px] flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-100 font-bold transition-colors"
-                          >
-                            <ExternalLink className="w-3 h-3" /> Download PDF
-                          </a>
+                          {report.report_url ? (
+                            <a 
+                              href={report.report_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-100 font-bold transition-colors"
+                            >
+                              <ExternalLink className="w-3 h-3" /> Download PDF
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-slate-500 font-medium">
+                              Awaiting Lab Upload
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}

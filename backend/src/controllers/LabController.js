@@ -47,6 +47,51 @@ const getLabRequests = async (req, res) => {
   }
 };
 
+// @desc    Create lab requests
+// @route   POST /api/lab/requests
+// @access  Private (Doctor)
+const createLabRequest = async (req, res) => {
+  try {
+    const { appointment_id, patient_id, tests, notes, priority } = req.body;
+    
+    const dRes = await db.query('SELECT id FROM doctors WHERE user_id = $1', [req.user.id]);
+    const doctor_id = dRes.rows.length > 0 ? dRes.rows[0].id : null;
+
+    const insertedRequests = [];
+    for (const testName of tests) {
+      const result = await db.query(`
+        INSERT INTO lab_requests (appointment_id, patient_id, doctor_id, test_name, notes, priority, status)
+        VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
+        RETURNING *
+      `, [appointment_id, patient_id, doctor_id, testName, notes, priority || 'Normal']);
+      insertedRequests.push(result.rows[0]);
+    }
+
+    // Notify patient
+    const pRes = await db.query('SELECT user_id FROM patients WHERE id = $1', [patient_id]);
+    if (pRes.rows.length > 0) {
+      await createNotification(
+        pRes.rows[0].user_id,
+        'Lab Tests Requested',
+        `Your doctor has requested ${tests.length} lab test(s). Please visit the laboratory.`,
+        'LAB'
+      );
+    }
+
+    const { logActivity } = require('./AuditController');
+    await logActivity(req.user.id, 'LAB_REQUEST_CREATED', `Created ${tests.length} lab requests for appointment ${appointment_id}`, {
+      module: 'LAB',
+      ipAddress: req.ip,
+      device: req.headers['user-agent']
+    });
+
+    res.status(201).json(insertedRequests);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Update lab request status & report
 // @route   PUT /api/lab/requests/:id
 // @access  Private (Admin, Lab)
@@ -74,11 +119,12 @@ const updateLabRequest = async (req, res) => {
 
     if (result.rows.length === 0) return res.status(404).json({ message: 'Lab request not found' });
 
-    // Notify patient
+    // Notify patient and doctor
     const labRes = await db.query(`
-      SELECT l.patient_id, p.user_id as patient_user_id, l.test_name
+      SELECT l.patient_id, p.user_id as patient_user_id, l.test_name, d.user_id as doctor_user_id
       FROM lab_requests l
       JOIN patients p ON l.patient_id = p.id
+      LEFT JOIN doctors d ON l.doctor_id = d.id
       WHERE l.id = $1
     `, [id]);
     
@@ -93,6 +139,14 @@ const updateLabRequest = async (req, res) => {
           : `Your lab request for ${testName} has been updated to ${finalStatus || result.rows[0].status}.`,
         'LAB'
       );
+      if (labRes.rows[0].doctor_user_id && report_url) {
+        await createNotification(
+          labRes.rows[0].doctor_user_id,
+          'Lab Report Ready',
+          `Lab report for ${testName} has been uploaded and is ready for your review.`,
+          'LAB'
+        );
+      }
     }
 
     const { logActivity } = require('./AuditController');
@@ -113,5 +167,6 @@ const updateLabRequest = async (req, res) => {
 
 module.exports = {
   getLabRequests,
-  updateLabRequest
+  updateLabRequest,
+  createLabRequest
 };

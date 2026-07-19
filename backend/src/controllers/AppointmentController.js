@@ -22,8 +22,9 @@ const getAppointments = async (req, res) => {
   try {
     let query = `
       SELECT a.*, 
-        p.patient_id as patient_reg_id, pu.first_name as patient_first_name, pu.last_name as patient_last_name,
-        d.specialization, du.first_name as doctor_first_name, du.last_name as doctor_last_name
+        p.patient_id as patient_reg_id, pu.first_name as patient_first_name, pu.last_name as patient_last_name, pu.phone as patient_phone, p.blood_group,
+        du.first_name as doctor_first_name, du.last_name as doctor_last_name, d.specialization, d.consultation_fee,
+        (SELECT string_agg(l.test_name || ' (' || l.status || ')', ', ') FROM lab_requests l WHERE l.appointment_id = a.id) as lab_requests_summary
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
       JOIN users pu ON p.user_id = pu.id

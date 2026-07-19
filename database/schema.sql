@@ -190,6 +190,7 @@ ALTER TABLE medicine_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
 ALTER TABLE medicine_orders ADD COLUMN IF NOT EXISTS payment_reference VARCHAR(100);
 ALTER TABLE medicine_orders ADD COLUMN IF NOT EXISTS collection_code VARCHAR(100);
 ALTER TABLE lab_requests ADD COLUMN IF NOT EXISTS technician_name VARCHAR(255);
+ALTER TABLE lab_requests ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'Normal';
 
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

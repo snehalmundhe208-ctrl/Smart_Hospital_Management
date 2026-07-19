@@ -52,11 +52,26 @@ const AppointmentsList = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getDisplayStatus = (apt) => {
+    if (apt.status === 'IN_CONSULTATION' && apt.lab_requests_summary) {
+      if (apt.lab_requests_summary.includes('PENDING') || apt.lab_requests_summary.includes('SAMPLE_COLLECTED')) {
+        return 'WAITING FOR LAB';
+      }
+      return 'LAB REPORT READY';
+    }
+    return apt.status;
+  };
+
+  const getStatusColor = (status, displayStatus) => {
+    if (displayStatus === 'WAITING FOR LAB') return 'bg-amber-100 text-amber-700';
+    if (displayStatus === 'LAB REPORT READY') return 'bg-blue-100 text-blue-700 border border-blue-200';
+    
     switch(status) {
       case 'PENDING': return 'bg-amber-100 text-amber-700';
       case 'CONFIRMED': return 'bg-blue-100 text-blue-700';
-      case 'COMPLETED': return 'bg-green-100 text-green-700';
+      case 'CHECKED_IN': return 'bg-purple-100 text-purple-700';
+      case 'IN_CONSULTATION': return 'bg-indigo-100 text-indigo-700';
+      case 'COMPLETED': return 'bg-emerald-100 text-emerald-700';
       case 'CANCELLED': return 'bg-red-100 text-red-700';
       default: return 'bg-slate-100 text-slate-700';
     }
@@ -141,9 +156,14 @@ const AppointmentsList = () => {
                       <span className="text-sm text-slate-600 font-medium capitalize">{apt.type.replace('_', ' ')}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(apt.status)}`}>
-                        {apt.status}
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${getStatusColor(apt.status, getDisplayStatus(apt))}`}>
+                        {getDisplayStatus(apt)}
                       </span>
+                      {apt.lab_requests_summary && user?.role !== 'PATIENT' && (
+                        <p className="text-[10px] text-slate-500 mt-2 max-w-[120px] truncate" title={apt.lab_requests_summary}>
+                          Labs: {apt.lab_requests_summary.split(',').length}
+                        </p>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {user?.role !== 'PATIENT' && (
@@ -166,12 +186,14 @@ const AppointmentsList = () => {
                               </button>
                             </div>
                           )}
-                          {apt.status === 'CONFIRMED' && (
+                          {(apt.status === 'CONFIRMED' || apt.status === 'CHECKED_IN' || apt.status === 'IN_CONSULTATION') && (
                              <button 
                                onClick={() => user?.role === 'DOCTOR' ? setReportModalApt(apt) : handleStatusUpdate(apt.id, 'COMPLETED')}
                                className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${btnTheme}`}
                              >
-                               {user?.role === 'DOCTOR' ? 'Generate Report & Complete' : 'Mark Completed'}
+                               {user?.role === 'DOCTOR' 
+                                  ? (getDisplayStatus(apt) === 'LAB REPORT READY' ? 'Review Labs & Complete' : 'Consult / Labs') 
+                                  : 'Mark Completed'}
                              </button>
                           )}
                           {apt.status === 'COMPLETED' && user?.role === 'DOCTOR' && (

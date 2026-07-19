@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+
+dotenv.config();
+
 const AuthRoutes = require('./src/routes/AuthRoutes');
 const PatientRoutes = require('./src/routes/PatientRoutes');
 const AppointmentRoutes = require('./src/routes/AppointmentRoutes');
@@ -20,8 +23,6 @@ const UploadRoutes = require('./src/routes/UploadRoutes');
 const RefundRoutes = require('./src/routes/RefundRoutes');
 const ServicePricingRoutes = require('./src/routes/ServicePricingRoutes');
 const path = require('path');
-
-dotenv.config();
 
 const app = express();
 

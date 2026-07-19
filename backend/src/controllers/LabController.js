@@ -138,6 +138,10 @@ const updateLabRequest = async (req, res) => {
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $4 RETURNING *
     `, [finalStatus, report_url, technician_name, id]);
+    
+    if (report_url) {
+      console.log('[UPLOAD FLOW] secure_url saved to database:', report_url);
+    }
 
     if (result.rows.length === 0) return res.status(404).json({ message: 'Lab request not found' });
 

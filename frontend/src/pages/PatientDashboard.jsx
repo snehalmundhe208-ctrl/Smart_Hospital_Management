@@ -5,7 +5,7 @@ import { Calendar, FileText, Clock, Plus, ArrowRight, Download, ShoppingBag, Fla
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { downloadMedicalReport, downloadMedicalCertificate } from '../utils/exportUtils';
+import { downloadMedicalReport, downloadMedicalCertificate, downloadInvoiceReceipt } from '../utils/exportUtils';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, AreaChart, Area, CartesianGrid, XAxis, YAxis } from 'recharts';
 import RefundList from '../components/RefundList';
 
@@ -27,6 +27,7 @@ const PatientDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
   const [payingBulk, setPayingBulk] = useState(false);
+  const [paymentModal, setPaymentModal] = useState({ isOpen: false, invoiceId: null, amount: 0, isBulk: false, bill: null });
 
   useEffect(() => {
     let isMounted = true;
@@ -107,25 +108,46 @@ const PatientDashboard = () => {
     }
   };
 
-  const handlePayInvoice = async (id) => {
-    try {
-      const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
-      await axios.put(`/api/billing/invoices/${id}/pay`, { payment_method: 'CREDIT_CARD' }, config);
-      setOutstandingBills(prev => prev.filter(i => i.id !== id));
-      setNotice('Invoice paid successfully.');
-    } catch (error) {
-      setNotice(error.response?.data?.message || 'Unable to pay invoice.');
+  const handlePayInvoice = (id) => {
+    const bill = outstandingBills.find(b => b.id === id);
+    if (bill) {
+      setPaymentModal({ isOpen: true, invoiceId: id, amount: bill.net_amount, isBulk: false, bill });
     }
   };
 
-  const handleBulkPay = async () => {
+  const handleBulkPay = () => {
+    const total = outstandingBills.reduce((acc, curr) => acc + Number(curr.net_amount), 0);
+    setPaymentModal({ isOpen: true, invoiceId: null, amount: total, isBulk: true, bill: null });
+  };
+
+  const confirmPayInvoice = async () => {
+    try {
+      setPayingBulk(true);
+      const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+      const { data: updatedInvoice } = await axios.put(`/api/billing/invoices/${paymentModal.invoiceId}/pay`, { payment_method: 'ONLINE' }, config);
+      setOutstandingBills(prev => prev.filter(i => i.id !== paymentModal.invoiceId));
+      setNotice('Invoice paid successfully. Downloading receipt...');
+      setPaymentModal({ isOpen: false, invoiceId: null, amount: 0, isBulk: false, bill: null });
+      downloadInvoiceReceipt(updatedInvoice, user);
+    } catch (error) {
+      setNotice(error.response?.data?.message || 'Unable to pay invoice.');
+    } finally {
+      setPayingBulk(false);
+    }
+  };
+
+  const confirmBulkPay = async () => {
     setPayingBulk(true);
     try {
       const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
       const invoice_ids = outstandingBills.map(b => b.id);
-      await axios.put('/api/billing/invoices/bulk-pay', { invoice_ids, payment_method: 'CREDIT_CARD' }, config);
+      const { data: updatedInvoices } = await axios.put('/api/billing/invoices/bulk-pay', { invoice_ids, payment_method: 'ONLINE' }, config);
       setOutstandingBills([]);
-      setNotice('All outstanding bills paid successfully.');
+      setNotice('All outstanding bills paid successfully. Downloading receipts...');
+      setPaymentModal({ isOpen: false, invoiceId: null, amount: 0, isBulk: false, bill: null });
+      if (Array.isArray(updatedInvoices)) {
+        updatedInvoices.forEach(inv => downloadInvoiceReceipt(inv, user));
+      }
     } catch (error) {
       setNotice(error.response?.data?.message || 'Unable to process bulk payment.');
     } finally {
@@ -446,6 +468,40 @@ const PatientDashboard = () => {
           </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Payment QR Modal */}
+      {paymentModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
+            <h3 className="text-2xl font-bold text-slate-800 mb-6">Complete Payment</h3>
+            <p className="text-slate-600 mb-6 text-center">Scan the QR code below to pay <span className="font-bold text-emerald-600">₹{paymentModal.amount}</span></p>
+            
+            <div className="bg-slate-50 p-6 rounded-2xl flex justify-center items-center mb-6 border border-slate-100">
+               <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=novacare@upi&pn=NovaCare&am=${paymentModal.amount}&cu=INR`} 
+                  alt="Payment QR Code" 
+                  className="w-40 h-40 object-contain mx-auto"
+               />
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setPaymentModal({ isOpen: false, invoiceId: null, amount: 0, isBulk: false, bill: null })}
+                className="flex-1 py-3 rounded-xl font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={paymentModal.isBulk ? confirmBulkPay : confirmPayInvoice}
+                disabled={payingBulk}
+                className="flex-1 py-3 rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                {payingBulk ? 'Processing...' : 'Confirm Payment'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </PatientLayout>

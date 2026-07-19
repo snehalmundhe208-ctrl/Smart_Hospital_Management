@@ -30,15 +30,20 @@ const upload = multer({
 // @desc    Upload lab report/file
 // @route   POST /api/upload
 // @access  Private
-router.post('/', upload.single('file'), (req, res) => {
+router.post('/', (req, res, next) => {
+  console.log('[UPLOAD FLOW] Upload started...');
+  next();
+}, upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
+      console.log('[UPLOAD FLOW] No file uploaded');
       return res.status(400).json({ message: 'No file uploaded' });
     }
     // Return Cloudinary secure URL
+    console.log('[UPLOAD FLOW] Cloudinary response received:', req.file);
     res.status(201).json({ url: req.file.path });
   } catch (error) {
-    console.error(error);
+    console.error('[UPLOAD FLOW] Error during upload:', error);
     res.status(500).json({ message: 'File upload failed' });
   }
 });

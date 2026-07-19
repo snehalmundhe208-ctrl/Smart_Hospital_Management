@@ -277,6 +277,8 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     medical_findings TEXT,
     conclusion TEXT,
     follow_up_date DATE,
+    requires_certificate BOOLEAN DEFAULT FALSE,
+    rest_days INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -375,7 +377,8 @@ ALTER TABLE appointments ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(10, 2) DEF
 ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS report_number VARCHAR(50);
 ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS medical_findings TEXT;
 ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS conclusion TEXT;
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS follow_up_date DATE;
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS requires_certificate BOOLEAN DEFAULT FALSE;
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS rest_days INTEGER DEFAULT 0;
 ALTER TABLE medicines ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE medicines ADD COLUMN IF NOT EXISTS dosage_information TEXT;
 ALTER TABLE medicines ADD COLUMN IF NOT EXISTS image_url TEXT;

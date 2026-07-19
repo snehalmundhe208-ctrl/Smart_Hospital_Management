@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Bed, Activity, Plus, Pencil, Trash2, X, Check, Save, User, Clock, Stethoscope, AlertCircle, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';

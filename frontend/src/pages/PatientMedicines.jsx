@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import axios from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import PatientLayout from '../layouts/PatientLayout';
 import { Search, ShoppingCart, Plus, Minus, X, CreditCard, ShoppingBag, ArrowRight } from 'lucide-react';

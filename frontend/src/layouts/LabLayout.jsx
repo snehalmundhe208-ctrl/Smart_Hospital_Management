@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { LogOut, Activity, LayoutDashboard, Menu, FlaskConical, BookOpen, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import NotificationsMenu from '../components/NotificationsMenu';
-import axios from 'axios';
+import axios from '../api/axios';
 import ProfileAvatar from '../components/ProfileAvatar';
 
 const LabLayout = ({ children, title }) => {

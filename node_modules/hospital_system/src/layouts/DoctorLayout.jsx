@@ -5,7 +5,7 @@ import { LogOut, Activity, Calendar, Users, Menu, ClipboardList, MessageSquare, 
 import { motion } from 'framer-motion';
 import NotificationsMenu from '../components/NotificationsMenu';
 import ProfileAvatar from '../components/ProfileAvatar';
-import axios from 'axios';
+import axios from '../api/axios';
 
 const DoctorLayout = ({ children, title }) => {
   const { user, logout } = useContext(AuthContext);

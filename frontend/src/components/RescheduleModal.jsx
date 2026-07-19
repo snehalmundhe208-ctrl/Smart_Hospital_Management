@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from '../api/axios';
 import { X, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 

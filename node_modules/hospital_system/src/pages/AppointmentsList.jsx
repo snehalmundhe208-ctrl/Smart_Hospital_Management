@@ -4,7 +4,7 @@ import DoctorLayout from '../layouts/DoctorLayout';
 import PatientLayout from '../layouts/PatientLayout';
 import ReceptionLayout from '../layouts/ReceptionLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { Calendar, Clock, User, CheckCircle, XCircle, Download, CalendarPlus, Star } from 'lucide-react';
 import { motion } from 'framer-motion';

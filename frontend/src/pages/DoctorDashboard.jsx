@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DoctorLayout from '../layouts/DoctorLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Calendar, Users, ClipboardList, CheckCircle, Clock, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, CartesianGrid, XAxis, YAxis, AreaChart, Area } from 'recharts';

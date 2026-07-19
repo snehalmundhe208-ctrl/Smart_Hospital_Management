@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../layouts/AdminLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Users, Activity, Calendar, DollarSign, ArrowUpRight, ArrowDownRight, Clock, Plus, XCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';

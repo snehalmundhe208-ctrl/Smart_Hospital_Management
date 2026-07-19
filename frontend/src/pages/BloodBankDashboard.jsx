@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Droplet, Plus, Minus, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PharmacyLayout from '../layouts/PharmacyLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Package, AlertTriangle, TrendingUp, Plus, Pencil, ClipboardList, X, Save, Boxes } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, CartesianGrid, XAxis, YAxis, AreaChart, Area, Line } from 'recharts';

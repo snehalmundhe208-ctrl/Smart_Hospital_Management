@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReceptionLayout from '../layouts/ReceptionLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Calendar, Users, FileText, CheckCircle, Search, Plus, Clock, ArrowRight, UserCheck, Stethoscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';

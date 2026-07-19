@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../layouts/AdminLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Pencil, Trash2, X, Save, Clock, Calendar as CalendarIcon, Phone, Mail, Award, Briefcase, GraduationCap } from 'lucide-react';
 import ProfileAvatar from '../components/ProfileAvatar';

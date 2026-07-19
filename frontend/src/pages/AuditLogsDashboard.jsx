@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import axios from '../api/axios';
 import AdminLayout from '../layouts/AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, Download, Activity, CheckCircle2, XCircle, AlertCircle, Clock, Eye, X, RefreshCw, Smartphone, Globe, Code, Users } from 'lucide-react';

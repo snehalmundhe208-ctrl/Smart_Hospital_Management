@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Star, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import axios from '../api/axios';
 
 const FeedbackModal = ({ appointment, onClose, onSuccess }) => {
   const [rating, setRating] = useState(5);

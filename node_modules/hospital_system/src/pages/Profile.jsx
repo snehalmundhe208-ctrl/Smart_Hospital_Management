@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Camera, Check, Trash2, Save, Loader2, User, Key, Shield, Calendar, MapPin, Phone, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getLayoutForRole } from '../utils/layoutResolver';

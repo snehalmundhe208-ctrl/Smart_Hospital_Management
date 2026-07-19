@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from '../api/axios';
 import { X, Plus, Trash2, FileText, CheckCircle, FileBadge } from 'lucide-react';
 import { motion } from 'framer-motion';
 

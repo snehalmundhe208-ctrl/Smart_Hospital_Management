@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import AdminLayout from '../layouts/AdminLayout';
 import DoctorLayout from '../layouts/DoctorLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { Star, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';

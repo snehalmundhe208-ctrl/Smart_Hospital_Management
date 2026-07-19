@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Package, AlertTriangle, TrendingUp, Plus, Pencil, ClipboardList, X, Save, Boxes, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';

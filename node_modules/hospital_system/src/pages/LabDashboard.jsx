@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import LabLayout from '../layouts/LabLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { FlaskConical, CheckCircle, Clock, FileText, Pencil, X, Save, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../layouts/AdminLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { motion } from 'framer-motion';
 import { Search, UserPlus, Eye, Download, FileText, Stethoscope, FlaskConical, ReceiptText, LoaderCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';

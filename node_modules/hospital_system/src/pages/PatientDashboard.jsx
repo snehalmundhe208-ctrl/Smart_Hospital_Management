@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PatientLayout from '../layouts/PatientLayout';
-import axios from 'axios';
+import axios from '../api/axios';
 import { Calendar, FileText, Clock, Plus, ArrowRight, Download, ShoppingBag, FlaskConical, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';

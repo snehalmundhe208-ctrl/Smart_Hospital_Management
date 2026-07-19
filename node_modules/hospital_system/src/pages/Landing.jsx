@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Shield, Users, ArrowRight, HeartPulse, Stethoscope, PhoneCall, Star, Ambulance, Siren, Flame, Droplet, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api/axios';
 
 const fallbackTestimonials = [
   { rating: 5, review: 'Amazing service and care. The doctors are very attentive!', first_name: 'Happy', last_name: 'Patient' },

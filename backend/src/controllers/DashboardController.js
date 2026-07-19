@@ -47,6 +47,32 @@ const getDashboardStats = async (req, res) => {
         ORDER BY EXTRACT(MONTH FROM appointment_date)
       `);
 
+      const todayRevenue = await db.query("SELECT SUM(net_amount) as total FROM invoices WHERE status = 'PAID' AND DATE(created_at) = CURRENT_DATE");
+      const monthlyRevenue = await db.query("SELECT SUM(net_amount) as total FROM invoices WHERE status = 'PAID' AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)");
+      
+      const pharmacyAnalytics = await db.query(`
+        SELECT 
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE status = 'PENDING') as pending,
+          COUNT(*) FILTER (WHERE status = 'COMPLETED') as completed,
+          COUNT(*) FILTER (WHERE status = 'CANCELLED') as cancelled
+        FROM medicine_orders
+      `);
+      
+      const highestPayingOrders = await db.query(`
+        SELECT 
+          o.id, p.first_name, p.last_name, o.total_amount, o.payment_status, o.created_at
+        FROM medicine_orders o
+        JOIN patients p ON o.patient_id = p.id
+        ORDER BY o.total_amount DESC LIMIT 5
+      `);
+
+      const topSellingMedicines = await db.query(`
+        SELECT medicine_name as name, SUM(quantity) as count
+        FROM medicine_order_items
+        GROUP BY medicine_name ORDER BY count DESC LIMIT 5
+      `);
+
       stats = {
         patients: parseInt(patientCount.rows[0].count),
         doctors: parseInt(doctorCount.rows[0].count),
@@ -58,7 +84,23 @@ const getDashboardStats = async (req, res) => {
         appointmentTrends: aptTrends.rows.map(r => ({ date: new Date(r.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}), count: parseInt(r.count) })),
         departmentStats: deptStats.rows.map(r => ({ name: r.name, patients: parseInt(r.patients) })),
         appointmentStatus: aptStatus.rows.map(r => ({ name: r.name, value: parseInt(r.value) })),
-        monthlyAppointments: monthlyApt.rows.map(r => ({ month: r.month, count: parseInt(r.count) }))
+        monthlyAppointments: monthlyApt.rows.map(r => ({ month: r.month, count: parseInt(r.count) })),
+        todayRevenue: parseFloat(todayRevenue.rows[0]?.total || 0),
+        monthlyRevenue: parseFloat(monthlyRevenue.rows[0]?.total || 0),
+        pharmacyAnalytics: {
+          total: parseInt(pharmacyAnalytics.rows[0]?.total || 0),
+          pending: parseInt(pharmacyAnalytics.rows[0]?.pending || 0),
+          completed: parseInt(pharmacyAnalytics.rows[0]?.completed || 0),
+          cancelled: parseInt(pharmacyAnalytics.rows[0]?.cancelled || 0)
+        },
+        highestPayingOrders: highestPayingOrders.rows.map(r => ({
+          id: r.id,
+          patient_name: `${r.first_name} ${r.last_name}`,
+          total_amount: parseFloat(r.total_amount),
+          payment_status: r.payment_status,
+          date: r.created_at
+        })),
+        topSellingMedicines: topSellingMedicines.rows.map(r => ({ name: r.name, count: parseInt(r.count) }))
       };
     } else if (req.user.role === 'DOCTOR') {
       const dRes = await db.query('SELECT id FROM doctors WHERE user_id = $1', [req.user.id]);

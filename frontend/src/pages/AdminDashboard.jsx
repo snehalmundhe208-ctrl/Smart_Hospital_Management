@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../layouts/AdminLayout';
 import axios from '../api/axios';
-import { Users, Activity, Calendar, DollarSign, ArrowUpRight, ArrowDownRight, Clock, Plus, XCircle, CheckCircle } from 'lucide-react';
+import { Users, Activity, Calendar, DollarSign, ArrowUpRight, ArrowDownRight, Clock, Plus, XCircle, CheckCircle, FileText, Pill, Download, CreditCard, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
 import RefundList from '../components/RefundList';
+import { downloadMedicalReport } from '../utils/exportUtils';
 
 const STATUS_COLORS = { 'COMPLETED': '#10b981', 'PENDING': '#f59e0b', 'CANCELLED': '#ef4444', 'RESCHEDULED': '#3b82f6', 'CONFIRMED': '#0ea5e9', 'SAMPLE_COLLECTED': '#f59e0b' };
 
@@ -15,6 +16,8 @@ const AdminDashboard = () => {
     staff: 0,
     appointments: 0,
     revenue: 0,
+    todayRevenue: 0,
+    monthlyRevenue: 0,
     revenueTrends: [],
     appointmentTrends: [],
     departmentStats: [],
@@ -22,9 +25,13 @@ const AdminDashboard = () => {
     monthlyAppointments: [],
     cancelledAppointments: 0,
     refundedAppointments: 0,
-    totalRefundAmount: 0
+    totalRefundAmount: 0,
+    pharmacyAnalytics: { total: 0, pending: 0, completed: 0, cancelled: 0 },
+    highestPayingOrders: [],
+    topSellingMedicines: []
   });
   const [activities, setActivities] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,8 +57,11 @@ const AdminDashboard = () => {
           status: log.status && log.status !== 'UNKNOWN' ? log.status : (log.action.toUpperCase().includes('FAIL') || log.action.toUpperCase().includes('ERROR') ? 'FAILED' : 'COMPLETED'),
           user: log.first_name ? `${log.first_name} ${log.last_name}` : 'System'
         }));
-
         setActivities(logs);
+
+        // Fetch recent prescriptions
+        const { data: rxData } = await axios.get('/api/prescriptions', config);
+        setPrescriptions((rxData || []).slice(0, 5));
 
       } catch (error) {
         console.error('Error fetching dashboard data', error);
@@ -65,14 +75,34 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleDownloadPrescription = (rx) => {
+    downloadMedicalReport(
+      { name: `${rx.patient_first_name} ${rx.patient_last_name}`, age: rx.patient_age || 'N/A', gender: rx.patient_gender || 'N/A' },
+      { name: `${rx.doctor_first_name} ${rx.doctor_last_name}`, specialization: rx.specialization || 'General' },
+      {
+        date: new Date(rx.created_at).toLocaleDateString(),
+        diagnosis: rx.diagnosis,
+        notes: rx.notes,
+        medicines: rx.items ? JSON.parse(rx.items) : []
+      }
+    );
+  };
+
   const statCards = [
     { title: 'Total Patients', value: stats.patients, icon: Users, color: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' },
     { title: 'Total Doctors', value: stats.doctors, icon: Activity, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
     { title: 'Appointments', value: stats.appointments, icon: Calendar, color: 'bg-purple-500/10 text-purple-400 border border-purple-500/20' },
     { title: 'Cancelled', value: stats.cancelledAppointments || 0, icon: XCircle, color: 'bg-red-500/10 text-red-400 border border-red-500/20' },
-    { title: 'Refunded Apts', value: stats.refundedAppointments || 0, icon: CheckCircle, color: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
-    { title: 'Total Refunds', value: `$${stats.totalRefundAmount || 0}`, icon: DollarSign, color: 'bg-orange-500/10 text-orange-400 border border-orange-500/20' },
-    { title: 'Net Revenue', value: `$${stats.revenue}`, icon: DollarSign, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
+    { title: 'Today\'s Revenue', value: `$${stats.todayRevenue || 0}`, icon: TrendingUp, color: 'bg-teal-500/10 text-teal-400 border border-teal-500/20' },
+    { title: 'Monthly Rev', value: `$${stats.monthlyRevenue || 0}`, icon: DollarSign, color: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' },
+    { title: 'Total Revenue', value: `$${stats.revenue}`, icon: DollarSign, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
+  ];
+
+  const pharmacyCards = [
+    { title: 'Total Orders', value: stats.pharmacyAnalytics?.total || 0, icon: Pill, color: 'bg-blue-500/10 text-blue-500 border border-blue-500/20' },
+    { title: 'Pending Orders', value: stats.pharmacyAnalytics?.pending || 0, icon: Clock, color: 'bg-amber-500/10 text-amber-500 border border-amber-500/20' },
+    { title: 'Completed Orders', value: stats.pharmacyAnalytics?.completed || 0, icon: CheckCircle, color: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' },
+    { title: 'Cancelled Orders', value: stats.pharmacyAnalytics?.cancelled || 0, icon: XCircle, color: 'bg-red-500/10 text-red-500 border border-red-500/20' }
   ];
 
   return (
@@ -104,10 +134,10 @@ const AdminDashboard = () => {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Recent Activities */}
-            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] relative overflow-hidden lg:col-span-1">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
               <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2 relative z-10">
                 <Clock className="w-5 h-5 text-blue-500" /> Recent Activities
               </h3>
@@ -155,7 +185,127 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {/* Recent Prescriptions */}
+            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] lg:col-span-2">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-indigo-500" /> Recent Prescriptions
+                </h3>
               </div>
+              {prescriptions.length === 0 ? (
+                <div className="h-48 flex items-center justify-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <p>No prescriptions found.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="p-4 font-semibold text-slate-600">Patient</th>
+                        <th className="p-4 font-semibold text-slate-600">Doctor</th>
+                        <th className="p-4 font-semibold text-slate-600">Diagnosis</th>
+                        <th className="p-4 font-semibold text-slate-600">Medicines</th>
+                        <th className="p-4 font-semibold text-slate-600 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {prescriptions.map(rx => {
+                        const items = rx.items ? JSON.parse(rx.items) : [];
+                        return (
+                          <tr key={rx.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4 font-bold text-slate-800">{rx.patient_first_name} {rx.patient_last_name}</td>
+                            <td className="p-4 text-slate-600">Dr. {rx.doctor_last_name}</td>
+                            <td className="p-4 text-slate-600">
+                              <span className="bg-slate-100 px-2 py-1 rounded text-xs font-semibold">{rx.diagnosis}</span>
+                            </td>
+                            <td className="p-4 text-slate-600 text-xs">{items.length} items prescribed</td>
+                            <td className="p-4 text-right">
+                              <button 
+                                onClick={() => handleDownloadPrescription(rx)}
+                                className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg font-bold text-xs transition-colors"
+                              >
+                                <Download className="w-3.5 h-3.5" /> PDF
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Pharmacy & Top Revenue */}
+          <div className="grid lg:grid-cols-2 gap-8 mt-8">
+            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
+                <Pill className="w-5 h-5 text-emerald-500" /> Pharmacy Analytics
+              </h3>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {pharmacyCards.map((card, i) => (
+                  <div key={i} className={`p-4 rounded-2xl ${card.color} flex flex-col justify-center items-center text-center`}>
+                    <card.icon className="w-6 h-6 mb-2 opacity-80" />
+                    <span className="text-2xl font-black">{card.value}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider mt-1 opacity-80">{card.title}</span>
+                  </div>
+                ))}
+              </div>
+              
+              <h4 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide">Top Selling Medicines</h4>
+              {stats.topSellingMedicines && stats.topSellingMedicines.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.topSellingMedicines.map((med, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                      <span className="font-semibold text-slate-800">{med.name}</span>
+                      <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">{med.count} Sold</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-500 text-sm">No sales data yet.</p>
+              )}
+            </div>
+
+            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
+                <CreditCard className="w-5 h-5 text-amber-500" /> Highest Paying Orders
+              </h3>
+              {stats.highestPayingOrders && stats.highestPayingOrders.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="p-3 font-semibold text-slate-600">Order ID</th>
+                        <th className="p-3 font-semibold text-slate-600">Patient</th>
+                        <th className="p-3 font-semibold text-slate-600">Amount</th>
+                        <th className="p-3 font-semibold text-slate-600 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {stats.highestPayingOrders.map(order => (
+                        <tr key={order.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-3 text-xs font-mono text-slate-500">#{order.id.slice(0,8)}</td>
+                          <td className="p-3 font-bold text-slate-800">{order.patient_name}</td>
+                          <td className="p-3 font-bold text-emerald-600">${order.total_amount}</td>
+                          <td className="p-3 text-right">
+                            <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase ${order.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                              {order.payment_status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <p>No orders found.</p>
+                </div>
+              )}
+            </div>
+          </div>
           
           {/* Charts Section */}
           <div className="grid lg:grid-cols-2 gap-8 mt-8">
@@ -261,6 +411,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-
-
-

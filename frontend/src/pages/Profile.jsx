@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import axios from '../api/axios';
 import { Camera, Check, Trash2, Save, Loader2, User, Key, Shield, Calendar, MapPin, Phone, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getLayoutForRole } from '../utils/layoutResolver';
+import { getLayoutForRole } from '../utils/LayoutResolver';
 
 const Profile = ({ title = 'Profile Management' }) => {
   const { user } = useContext(AuthContext);

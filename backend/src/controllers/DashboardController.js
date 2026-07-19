@@ -14,7 +14,6 @@ const getDashboardStats = async (req, res) => {
       const appointmentCount = await db.query('SELECT COUNT(*) FROM appointments');
       const revenue = await db.query("SELECT SUM(net_amount) as total FROM invoices WHERE status = 'PAID'");
       const cancelledAptCount = await db.query("SELECT COUNT(*) FROM appointments WHERE status = 'CANCELLED'");
-      const refundsStats = await db.query("SELECT COUNT(*) as refund_count, SUM(refund_amount) as total_refund FROM refunds");
       
       const revTrends = await db.query(`
         SELECT DATE(created_at) as date, SUM(net_amount) as total
@@ -55,8 +54,6 @@ const getDashboardStats = async (req, res) => {
         appointments: parseInt(appointmentCount.rows[0].count),
         revenue: parseFloat(revenue.rows[0].total || 0),
         cancelledAppointments: parseInt(cancelledAptCount.rows[0].count),
-        refundedAppointments: parseInt(refundsStats.rows[0].refund_count),
-        totalRefundAmount: parseFloat(refundsStats.rows[0].total_refund || 0),
         revenueTrends: revTrends.rows.map(r => ({ date: new Date(r.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}), total: parseFloat(r.total) })),
         appointmentTrends: aptTrends.rows.map(r => ({ date: new Date(r.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}), count: parseInt(r.count) })),
         departmentStats: deptStats.rows.map(r => ({ name: r.name, patients: parseInt(r.patients) })),

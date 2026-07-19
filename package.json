@@ -1,12 +1,8 @@
 {
   "name": "hospital-system-root",
   "private": true,
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
   "scripts": {
-    "build": "npm run build --workspace=hospital_system"
+    "build": "npm run build --prefix frontend"
   },
   "engines": {
     "node": "22.x"

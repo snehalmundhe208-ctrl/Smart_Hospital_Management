@@ -118,7 +118,7 @@ const LabDashboard = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                         <XAxis type="number" stroke="#94a3b8" />
                         <YAxis dataKey="name" type="category" stroke="#94a3b8" width={80} />
-                        <Tooltip cursor={{ stroke: "#94a3b8", strokeWidth: 1, strokeDasharray: "3 3" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} itemStyle={{ color: '#8b5cf6' }} cursor={{ fill: '#f8fafc' }} />
+                        <Tooltip cursor={{ fill: '#f8fafc', stroke: "#94a3b8", strokeWidth: 1, strokeDasharray: "3 3" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} itemStyle={{ color: '#8b5cf6' }} />
                         <Bar dataKey="count" fill="url(#colorLabBar)" radius={[0, 6, 6, 0]} isAnimationActive={true} animationDuration={1500} animationEasing="ease-in-out" />
                       </BarChart>
                     </ResponsiveContainer>

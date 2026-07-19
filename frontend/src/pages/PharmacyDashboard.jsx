@@ -202,7 +202,7 @@ const PharmacyDashboard = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                         <XAxis type="number" stroke="#94a3b8" />
                         <YAxis type="category" dataKey="name" stroke="#94a3b8" width={100} />
-                        <Tooltip cursor={{ stroke: "#94a3b8", strokeWidth: 1, strokeDasharray: "3 3" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} itemStyle={{ color: '#10b981' }} cursor={{ fill: '#f8fafc' }} />
+                          <Tooltip cursor={{ fill: '#f8fafc', stroke: "#94a3b8", strokeWidth: 1, strokeDasharray: "3 3" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} itemStyle={{ color: '#10b981' }} />
                         <Bar dataKey="count" fill="url(#colorPharmBar)" radius={[0, 4, 4, 0]} isAnimationActive={true} animationDuration={1500} animationEasing="ease-in-out" />
                       </BarChart>
                     </ResponsiveContainer>

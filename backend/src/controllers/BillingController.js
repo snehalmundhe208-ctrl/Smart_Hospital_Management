@@ -168,9 +168,36 @@ const payInvoice = async (req, res) => {
   }
 }
 
+// @desc    Update multiple invoice statuses (Bulk Pay)
+// @route   PUT /api/billing/invoices/bulk-pay
+// @access  Private (Admin, Receptionist, Patient)
+const payBulkInvoices = async (req, res) => {
+  try {
+    const { invoice_ids, payment_method } = req.body;
+    
+    if (!invoice_ids || !invoice_ids.length) {
+      return res.status(400).json({ message: 'No invoices provided' });
+    }
+
+    const placeholders = invoice_ids.map((_, i) => `$${i + 2}`).join(',');
+    const result = await db.query(`
+        UPDATE invoices SET status = 'PAID', payment_method = $1 
+        WHERE id IN (${placeholders}) RETURNING *
+    `, [payment_method, ...invoice_ids]);
+
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Invoices not found' });
+
+    res.json(result.rows);
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
 module.exports = {
   getInvoices,
   createInvoice,
   payInvoice,
+  payBulkInvoices,
   payAppointment
 };

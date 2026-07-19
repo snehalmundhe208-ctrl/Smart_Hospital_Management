@@ -119,10 +119,41 @@ const createPrescription = async (req, res) => {
     const reportNumber = `NCR-${Date.now()}-${String(patient_id).slice(0, 4).toUpperCase()}`;
     
     console.log('Inserting into prescriptions...');
+    
+    // Fetch Prices
+    const priceRes = await db.query("SELECT price, service_type FROM service_prices WHERE is_active = true");
+    const prices = {};
+    priceRes.rows.forEach(r => prices[r.service_type] = Number(r.price));
+    
+    const reportPrice = prices['REPORT'] || 200;
+    const certPrice = prices['CERTIFICATE'] || 300;
+    
+    let totalAmount = reportPrice;
+    if (requires_certificate) totalAmount += certPrice;
+
+    // Create Invoice
+    const invoiceRes = await db.query(`
+      INSERT INTO invoices (patient_id, appointment_id, total_amount, net_amount, status, payment_method)
+      VALUES ($1, $2, $3, $3, 'UNPAID', 'PENDING') RETURNING id
+    `, [patient_id, appointment_id, totalAmount]);
+    const invoiceId = invoiceRes.rows[0].id;
+
+    await db.query(`
+      INSERT INTO invoice_items (invoice_id, description, amount, type)
+      VALUES ($1, $2, $3, 'REPORT')
+    `, [invoiceId, 'Medical Report / Prescription', reportPrice]);
+
+    if (requires_certificate) {
+      await db.query(`
+        INSERT INTO invoice_items (invoice_id, description, amount, type)
+        VALUES ($1, $2, $3, 'CERTIFICATE')
+      `, [invoiceId, 'Medical Certificate', certPrice]);
+    }
+
     const prescriptionRes = await db.query(`
-      INSERT INTO prescriptions (appointment_id, patient_id, doctor_id, diagnosis, notes, report_number, medical_findings, conclusion, follow_up_date, requires_certificate, rest_days)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *
-    `, [appointment_id || null, patient_id || null, doctorId, diagnosis, notes || '', reportNumber, medical_findings || null, conclusion || null, follow_up_date || null, requires_certificate || false, rest_days || 0]);
+      INSERT INTO prescriptions (appointment_id, patient_id, doctor_id, diagnosis, notes, report_number, medical_findings, conclusion, follow_up_date, requires_certificate, rest_days, invoice_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *
+    `, [appointment_id || null, patient_id || null, doctorId, diagnosis, notes || '', reportNumber, medical_findings || null, conclusion || null, follow_up_date || null, requires_certificate || false, rest_days || 0, invoiceId]);
 
     const prescriptionId = prescriptionRes.rows[0].id;
 

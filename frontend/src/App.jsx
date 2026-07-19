@@ -10,6 +10,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminPatients from './pages/AdminPatients';
 import AdminDoctors from './pages/AdminDoctors';
 import AdminMedicines from './pages/AdminMedicines';
+import AdminServicePricing from './pages/AdminServicePricing';
 import PatientDashboard from './pages/PatientDashboard';
 import PatientProfile from './pages/PatientProfile';
 import Profile from './pages/Profile';
@@ -65,6 +66,7 @@ function App() {
       <Route path="/admin/reviews"   element={PR(['ADMIN'], Reviews)} />
       <Route path="/admin/audit"     element={PR(['ADMIN'], AuditLogsDashboard)} />
       <Route path="/admin/profile"   element={PR(['ADMIN'], Profile)} />
+      <Route path="/admin/service-pricing" element={PR(['ADMIN'], AdminServicePricing)} />
       {/* Doctor */}
       <Route path="/doctor"              element={PR(['DOCTOR'], DoctorDashboard)} />
       <Route path="/doctor/appointments" element={PR(['DOCTOR'], AppointmentsList)} />

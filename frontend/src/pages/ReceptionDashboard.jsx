@@ -15,9 +15,16 @@ const ReceptionDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [invoices, setInvoices] = useState([]);
+  const [payingBulk, setPayingBulk] = useState(false);
+
   useEffect(() => {
     fetchWalkIns();
-    const interval = setInterval(fetchWalkIns, 5000);
+    fetchInvoices();
+    const interval = setInterval(() => {
+      fetchWalkIns();
+      fetchInvoices();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -25,7 +32,6 @@ const ReceptionDashboard = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
       const { data } = await axios.get('/api/appointments', config);
-      // Show all active queue appointments
       setAppointments(data);
     } catch (error) {
       console.error('Error fetching appointments', error);
@@ -34,16 +40,52 @@ const ReceptionDashboard = () => {
     }
   };
 
+  const fetchInvoices = async () => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+      const { data } = await axios.get('/api/billing/invoices', config);
+      setInvoices(data.filter(i => i.status === 'UNPAID'));
+    } catch (error) {
+      console.error('Error fetching invoices', error);
+    }
+  };
+
   const handleStatusUpdate = async (id, status) => {
-    // Optimistic UI update
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
     try {
       const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
       await axios.put(`/api/appointments/${id}/status`, { status }, config);
-      // No need to fetch again immediately if optimistic update is successful
     } catch (error) {
       console.error('Error updating status', error);
-      fetchWalkIns(); // Revert on failure
+      fetchWalkIns(); 
+    }
+  };
+
+  const handlePayInvoice = async (id) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+      await axios.put(`/api/billing/invoices/${id}/pay`, { payment_method: 'CASH' }, config);
+      setInvoices(prev => prev.filter(i => i.id !== id));
+      alert('Invoice marked as paid.');
+    } catch (error) {
+      alert('Unable to pay invoice.');
+    }
+  };
+
+  const handleBulkPay = async (patientId) => {
+    setPayingBulk(true);
+    try {
+      const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+      const patientInvoices = invoices.filter(i => i.patient_id === patientId);
+      const invoice_ids = patientInvoices.map(b => b.id);
+      if (invoice_ids.length === 0) return;
+      await axios.put('/api/billing/invoices/bulk-pay', { invoice_ids, payment_method: 'CASH' }, config);
+      setInvoices(prev => prev.filter(i => i.patient_id !== patientId));
+      alert('All patient bills paid.');
+    } catch (error) {
+      alert('Unable to process bulk payment.');
+    } finally {
+      setPayingBulk(false);
     }
   };
 
@@ -162,6 +204,45 @@ const ReceptionDashboard = () => {
                 </ResponsiveContainer>
              </div>
           </div>
+
+          {invoices && invoices.length > 0 && (
+             <div className="bg-white p-8 rounded-3xl border border-red-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8">
+               <h3 className="text-xl font-bold text-red-600 mb-6 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span> Outstanding Patient Bills
+               </h3>
+               <div className="overflow-x-auto">
+                 <table className="w-full text-left border-collapse">
+                   <thead>
+                     <tr className="bg-red-50/50 border-b border-red-100 text-sm text-red-800">
+                       <th className="px-4 py-3 font-semibold rounded-tl-xl">Patient Name</th>
+                       <th className="px-4 py-3 font-semibold">Total Outstanding</th>
+                       <th className="px-4 py-3 font-semibold">Invoices</th>
+                       <th className="px-4 py-3 font-semibold text-right rounded-tr-xl">Action</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-red-50 text-sm">
+                     {Object.values(invoices.reduce((acc, curr) => {
+                       if (!acc[curr.patient_id]) acc[curr.patient_id] = { patient_id: curr.patient_id, name: `${curr.first_name} ${curr.last_name}`, total: 0, count: 0 };
+                       acc[curr.patient_id].total += Number(curr.net_amount);
+                       acc[curr.patient_id].count += 1;
+                       return acc;
+                     }, {})).map((group) => (
+                       <tr key={group.patient_id} className="hover:bg-red-50/30 transition-colors">
+                         <td className="px-4 py-4 font-bold text-slate-800">{group.name}</td>
+                         <td className="px-4 py-4 font-bold text-slate-900">₹{group.total}</td>
+                         <td className="px-4 py-4 text-slate-600">{group.count} Bill(s)</td>
+                         <td className="px-4 py-4 text-right">
+                           <button onClick={() => handleBulkPay(group.patient_id)} disabled={payingBulk} className="px-4 py-2 border-2 border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-bold text-xs transition-colors disabled:opacity-50">
+                             Pay All
+                           </button>
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
+             </div>
+          )}
 
           <div className="pt-2">
             <h2 className="text-2xl font-extrabold text-slate-800 mb-6 flex items-center gap-2">

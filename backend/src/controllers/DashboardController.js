@@ -50,6 +50,15 @@ const getDashboardStats = async (req, res) => {
       const todayRevenue = await db.query("SELECT SUM(net_amount) as total FROM invoices WHERE status = 'PAID' AND DATE(created_at) = CURRENT_DATE");
       const monthlyRevenue = await db.query("SELECT SUM(net_amount) as total FROM invoices WHERE status = 'PAID' AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)");
       
+      const revenueBreakdown = await db.query(`
+        SELECT type, SUM(amount) as total 
+        FROM invoice_items ii
+        JOIN invoices i ON ii.invoice_id = i.id
+        WHERE i.status = 'PAID'
+        GROUP BY type
+      `);
+      const outstandingPayments = await db.query("SELECT SUM(net_amount) as total FROM invoices WHERE status = 'UNPAID'");
+
       const pharmacyAnalytics = await db.query(`
         SELECT 
           COUNT(*) as total,
@@ -101,7 +110,9 @@ const getDashboardStats = async (req, res) => {
           payment_status: r.payment_status,
           date: r.created_at
         })),
-        topSellingMedicines: topSellingMedicines.rows.map(r => ({ name: r.name, count: parseInt(r.count) }))
+        topSellingMedicines: topSellingMedicines.rows.map(r => ({ name: r.name, count: parseInt(r.count) })),
+        revenueBreakdown: revenueBreakdown.rows.map(r => ({ type: r.type, total: parseFloat(r.total) })),
+        outstandingPayments: parseFloat(outstandingPayments.rows[0]?.total || 0)
       };
     } else if (req.user.role === 'DOCTOR') {
       const dRes = await db.query('SELECT id FROM doctors WHERE user_id = $1', [req.user.id]);

@@ -92,10 +92,10 @@ const AdminDashboard = () => {
     { title: 'Total Patients', value: stats.patients, icon: Users, color: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' },
     { title: 'Total Doctors', value: stats.doctors, icon: Activity, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
     { title: 'Appointments', value: stats.appointments, icon: Calendar, color: 'bg-purple-500/10 text-purple-400 border border-purple-500/20' },
-    { title: 'Cancelled', value: stats.cancelledAppointments || 0, icon: XCircle, color: 'bg-red-500/10 text-red-400 border border-red-500/20' },
-    { title: 'Today\'s Revenue', value: `$${stats.todayRevenue || 0}`, icon: TrendingUp, color: 'bg-teal-500/10 text-teal-400 border border-teal-500/20' },
-    { title: 'Monthly Rev', value: `$${stats.monthlyRevenue || 0}`, icon: DollarSign, color: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' },
-    { title: 'Total Revenue', value: `$${stats.revenue}`, icon: DollarSign, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
+    { title: 'Today\'s Revenue', value: `₹${stats.todayRevenue || 0}`, icon: TrendingUp, color: 'bg-teal-500/10 text-teal-400 border border-teal-500/20' },
+    { title: 'Monthly Rev', value: `₹${stats.monthlyRevenue || 0}`, icon: DollarSign, color: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' },
+    { title: 'Total Revenue', value: `₹${stats.revenue}`, icon: DollarSign, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
+    { title: 'Outstanding', value: `₹${stats.outstandingPayments || 0}`, icon: DollarSign, color: 'bg-red-500/10 text-red-400 border border-red-500/20' },
   ];
 
   const pharmacyCards = [

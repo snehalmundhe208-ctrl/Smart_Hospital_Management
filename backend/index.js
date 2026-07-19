@@ -18,6 +18,7 @@ const BannerRoutes = require('./src/routes/BannerRoutes');
 const DepartmentRoutes = require('./src/routes/DepartmentRoutes');
 const UploadRoutes = require('./src/routes/UploadRoutes');
 const RefundRoutes = require('./src/routes/RefundRoutes');
+const ServicePricingRoutes = require('./src/routes/ServicePricingRoutes');
 const path = require('path');
 
 dotenv.config();
@@ -50,6 +51,7 @@ app.use('/api/banners', BannerRoutes);
 app.use('/api/departments', DepartmentRoutes);
 app.use('/api/upload', UploadRoutes);
 app.use('/api/refunds', RefundRoutes);
+app.use('/api/service-prices', ServicePricingRoutes);
 
 // Global Error Handlers
 process.on('uncaughtException', (err) => {

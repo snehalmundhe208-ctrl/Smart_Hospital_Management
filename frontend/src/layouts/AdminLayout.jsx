@@ -24,6 +24,7 @@ const AdminLayout = ({ children, title }) => {
     { name: 'Wards & Beds', path: '/admin/wards',    icon: Bed },
     { name: 'Reviews',      path: '/admin/reviews',  icon: MessageSquare },
     { name: 'Audit Logs',   path: '/admin/audit',    icon: FileText },
+    { name: 'Service Pricing', path: '/admin/service-pricing', icon: Settings },
     { name: 'Settings',     path: '/admin/settings', icon: Settings },
   ];
 

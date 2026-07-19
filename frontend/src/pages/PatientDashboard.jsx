@@ -23,8 +23,10 @@ const PatientDashboard = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const [prescriptions, setPrescriptions] = useState([]);
   const [labReports, setLabReports] = useState([]);
+  const [outstandingBills, setOutstandingBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
+  const [payingBulk, setPayingBulk] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,7 +53,13 @@ const PatientDashboard = () => {
         // Fetch lab reports
         const { data: labData } = await axios.get('/api/lab/requests', config);
         if(isMounted) {
-           setLabReports(labData.slice(0, 3)); // show timeline, not just finished reports
+           setLabReports(labData.slice(0, 3)); 
+        }
+
+        // Fetch invoices
+        const { data: invoices } = await axios.get('/api/billing/invoices', config);
+        if(isMounted) {
+           setOutstandingBills(invoices.filter(i => i.status === 'UNPAID'));
         }
       } catch (error) {
         console.error('Error fetching dashboard stats', error);
@@ -96,6 +104,32 @@ const PatientDashboard = () => {
     } catch (error) {
       console.error('Error downloading report', error);
       setNotice('Failed to download the medical report.');
+    }
+  };
+
+  const handlePayInvoice = async (id) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+      await axios.put(`/api/billing/invoices/${id}/pay`, { payment_method: 'CREDIT_CARD' }, config);
+      setOutstandingBills(prev => prev.filter(i => i.id !== id));
+      setNotice('Invoice paid successfully.');
+    } catch (error) {
+      setNotice(error.response?.data?.message || 'Unable to pay invoice.');
+    }
+  };
+
+  const handleBulkPay = async () => {
+    setPayingBulk(true);
+    try {
+      const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+      const invoice_ids = outstandingBills.map(b => b.id);
+      await axios.put('/api/billing/invoices/bulk-pay', { invoice_ids, payment_method: 'CREDIT_CARD' }, config);
+      setOutstandingBills([]);
+      setNotice('All outstanding bills paid successfully.');
+    } catch (error) {
+      setNotice(error.response?.data?.message || 'Unable to process bulk payment.');
+    } finally {
+      setPayingBulk(false);
     }
   };
 
@@ -164,6 +198,46 @@ const PatientDashboard = () => {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mt-8">
+             {/* Outstanding Bills */}
+             {outstandingBills && outstandingBills.length > 0 && (
+                <div className="lg:col-span-2 bg-white/70 backdrop-blur-xl p-8 rounded-3xl border border-red-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                   <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-red-600 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span> Outstanding Bills
+                      </h3>
+                      <button onClick={handleBulkPay} disabled={payingBulk} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-600/20 disabled:opacity-50">
+                        {payingBulk ? 'Processing...' : `Pay All (₹${outstandingBills.reduce((acc, curr) => acc + Number(curr.net_amount), 0)})`}
+                      </button>
+                   </div>
+                   <div className="overflow-x-auto">
+                     <table className="w-full text-left border-collapse">
+                       <thead>
+                         <tr className="bg-red-50/50 border-b border-red-100 text-sm text-red-800">
+                           <th className="px-4 py-3 font-semibold rounded-tl-xl">Invoice ID</th>
+                           <th className="px-4 py-3 font-semibold">Date</th>
+                           <th className="px-4 py-3 font-semibold">Amount</th>
+                           <th className="px-4 py-3 font-semibold text-right rounded-tr-xl">Action</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-red-50 text-sm">
+                         {outstandingBills.map((bill) => (
+                           <tr key={bill.id} className="hover:bg-red-50/30 transition-colors">
+                             <td className="px-4 py-4 font-mono text-slate-500">{bill.id.split('-')[0]}</td>
+                             <td className="px-4 py-4 font-medium text-slate-700">{new Date(bill.created_at).toLocaleDateString()}</td>
+                             <td className="px-4 py-4 font-bold text-slate-900">₹{bill.net_amount}</td>
+                             <td className="px-4 py-4 text-right">
+                               <button onClick={() => handlePayInvoice(bill.id)} className="px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-bold text-xs transition-colors">
+                                 Pay Now
+                               </button>
+                             </td>
+                           </tr>
+                         ))}
+                       </tbody>
+                     </table>
+                   </div>
+                </div>
+             )}
+
              <div className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <h3 className="text-xl font-bold text-slate-800 mb-6">Appointment History</h3>
                 {stats.appointmentHistory && stats.appointmentHistory.length > 0 ? (

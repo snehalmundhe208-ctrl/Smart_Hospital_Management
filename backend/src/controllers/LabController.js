@@ -7,14 +7,16 @@ const { createNotification } = require('./NotificationController');
 const getLabRequests = async (req, res) => {
   try {
     let query = `
-      SELECT l.*, p.patient_id as patient_reg_id, u.first_name as patient_first_name, u.last_name as patient_last_name,
-      d.first_name as doctor_first_name, d.last_name as doctor_last_name, l.technician_name,
-      a.status as appointment_status
+      SELECT l.*, i.status as payment_status,
+        p.patient_id as patient_reg_id, pu.first_name as patient_first_name, pu.last_name as patient_last_name, pu.phone as patient_phone,
+        du.first_name as doctor_first_name, du.last_name as doctor_last_name,
+        a.status as appointment_status
       FROM lab_requests l
+      LEFT JOIN invoices i ON l.invoice_id = i.id
       JOIN patients p ON l.patient_id = p.id
-      JOIN users u ON p.user_id = u.id
-      LEFT JOIN doctors doc ON l.doctor_id = doc.id
-      LEFT JOIN users d ON doc.user_id = d.id
+      JOIN users pu ON p.user_id = pu.id
+      JOIN doctors d ON l.doctor_id = d.id
+      JOIN users du ON d.user_id = du.id
       LEFT JOIN appointments a ON l.appointment_id = a.id
     `;
     const params = [];
@@ -54,26 +56,46 @@ const createLabRequest = async (req, res) => {
   try {
     const { appointment_id, patient_id, tests, notes, priority } = req.body;
     
-    const dRes = await db.query('SELECT id FROM doctors WHERE user_id = $1', [req.user.id]);
+    const dRes = await db.query('SELECT id, user_id FROM doctors WHERE user_id = $1', [req.user.id]);
     const doctor_id = dRes.rows.length > 0 ? dRes.rows[0].id : null;
+
+    // Fetch Lab Test price
+    const priceRes = await db.query("SELECT price FROM service_prices WHERE service_type = 'LAB_TEST' AND is_active = true");
+    const labTestPrice = priceRes.rows.length > 0 ? priceRes.rows[0].price : 500;
 
     const insertedRequests = [];
     for (const testName of tests) {
+      // Create a separate invoice for each lab test so they can be paid individually
+      const invoiceRes = await db.query(`
+        INSERT INTO invoices (patient_id, appointment_id, total_amount, net_amount, status, payment_method)
+        VALUES ($1, $2, $3, $3, 'UNPAID', 'PENDING') RETURNING id
+      `, [patient_id, appointment_id, labTestPrice]);
+      const invoiceId = invoiceRes.rows[0].id;
+
+      await db.query(`
+        INSERT INTO invoice_items (invoice_id, description, amount, type)
+        VALUES ($1, $2, $3, 'LAB_TEST')
+      `, [invoiceId, \`Lab Test: \${testName}\`, labTestPrice]);
+
       const result = await db.query(`
-        INSERT INTO lab_requests (appointment_id, patient_id, doctor_id, test_name, notes, priority, status)
-        VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
+        INSERT INTO lab_requests (appointment_id, patient_id, doctor_id, test_name, notes, priority, status, invoice_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7)
         RETURNING *
-      `, [appointment_id, patient_id, doctor_id, testName, notes, priority || 'Normal']);
+      `, [appointment_id, patient_id, doctor_id, testName, notes, priority || 'Normal', invoiceId]);
       insertedRequests.push(result.rows[0]);
     }
+
+    // Set appointment status to IN_CONSULTATION
+    await db.query(`UPDATE appointments SET status = 'IN_CONSULTATION' WHERE id = $1 AND status != 'COMPLETED'`, [appointment_id]);
 
     // Notify patient
     const pRes = await db.query('SELECT user_id FROM patients WHERE id = $1', [patient_id]);
     if (pRes.rows.length > 0) {
+      const { createNotification } = require('./NotificationController');
       await createNotification(
         pRes.rows[0].user_id,
         'Lab Tests Requested',
-        `Your doctor has requested ${tests.length} lab test(s). Please visit the laboratory.`,
+        `Your doctor has requested ${tests.length} lab test(s). Please pay the outstanding bills in your dashboard to proceed.`,
         'LAB'
       );
     }

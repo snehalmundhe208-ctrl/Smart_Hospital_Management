@@ -1,39 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const { v2: cloudinary } = require('cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
-const fs = require('fs');
 
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../../../uploads/reports');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Multer config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'report-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Multer Storage for Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'hospital_system/reports',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+    resource_type: 'auto'
   }
 });
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDFs and images are allowed'));
-    }
-  }
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// @desc    Upload lab report file
+// @desc    Upload lab report/file
 // @route   POST /api/upload
 // @access  Private
 router.post('/', upload.single('file'), (req, res) => {
@@ -41,9 +35,8 @@ router.post('/', upload.single('file'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    // Return relative URL for static serving
-    const fileUrl = `/uploads/reports/${req.file.filename}`;
-    res.status(201).json({ url: fileUrl });
+    // Return Cloudinary secure URL
+    res.status(201).json({ url: req.file.path });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'File upload failed' });

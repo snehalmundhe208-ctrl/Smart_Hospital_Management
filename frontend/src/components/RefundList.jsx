@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
-import { RefreshCcw, Search, DollarSign, Calendar, XCircle, CheckCircle, FileText } from 'lucide-react';
+import { RefreshCcw, Search, DollarSign, Calendar, XCircle, CheckCircle, FileText, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const RefundList = ({ user }) => {
@@ -149,8 +149,8 @@ const RefundList = ({ user }) => {
                     </td>
                     
                     <td className="p-4">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
-                        <CheckCircle className="w-3.5 h-3.5" />
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${refund.refund_status === 'COMPLETED' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
+                        {refund.refund_status === 'COMPLETED' ? <CheckCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
                         {refund.refund_status}
                       </span>
                     </td>

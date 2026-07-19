@@ -199,7 +199,7 @@ const updateAppointmentStatus = async (req, res) => {
           // Insert Refund Record
           await db.query(`
             INSERT INTO refunds (appointment_id, patient_id, doctor_id, cancelled_by, amount_paid, refund_amount, refund_status, transaction_id, reason)
-            VALUES ($1, $2, $3, $4, $5, $6, 'COMPLETED', $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
           `, [id, details.patient_id, details.doctor_id, req.user.id, details.paid_amount || 0, details.paid_amount || 0, details.payment_reference, reason || 'Patient cancelled']);
           
           await createNotification(

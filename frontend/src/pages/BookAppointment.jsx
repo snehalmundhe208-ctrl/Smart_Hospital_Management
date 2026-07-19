@@ -25,6 +25,7 @@ const BookAppointment = () => {
   const [success, setSuccess] = useState(false);
   const [pendingAppointment, setPendingAppointment] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('UPI');
+  const [cardDetails, setCardDetails] = useState({ number: '', name: '', expiry: '', cvv: '' });
   const [paying, setPaying] = useState(false);
   const navigate = useNavigate();
 
@@ -75,7 +76,18 @@ const BookAppointment = () => {
 
   const handlePayment = async () => {
     if (!pendingAppointment) return;
+    if (paymentMethod === 'CARD') {
+      if (!cardDetails.number || !cardDetails.name || !cardDetails.expiry || !cardDetails.cvv) {
+        setError('All card fields are required.');
+        return;
+      }
+      if (cardDetails.number.replace(/\D/g, '').length !== 16) {
+        setError('Card number must be exactly 16 digits.');
+        return;
+      }
+    }
     setPaying(true);
+    setError('');
     try {
       const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
       const { data } = await axios.post(`/api/billing/appointments/${pendingAppointment.id}/pay`, { payment_method: paymentMethod }, config);
@@ -268,7 +280,24 @@ const BookAppointment = () => {
              </div>
           </div>
           <div className="mb-5 rounded-2xl bg-emerald-50 p-4 flex justify-between items-center"><p className="text-sm font-bold uppercase tracking-wider text-emerald-700">Consultation fee</p><p className="text-2xl font-extrabold text-emerald-900">${Number(doctors.find((doctor) => doctor.id === pendingAppointment.doctor_id)?.consultation_fee || 0).toFixed(2)}</p></div>
-          <label className="block text-sm font-bold text-slate-700">Payment method<select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 outline-none ring-emerald-500 focus:ring-2"><option value="UPI">UPI</option><option value="CARD">Debit or credit card</option><option value="NET_BANKING">Net banking</option></select></label>
+          <label className="block text-sm font-bold text-slate-700">Payment method
+            <select value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setError(''); }} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 outline-none ring-emerald-500 focus:ring-2">
+              <option value="UPI">UPI</option>
+              <option value="CARD">Debit or credit card</option>
+              <option value="NET_BANKING">Net banking</option>
+            </select>
+          </label>
+          
+          {paymentMethod === 'CARD' && (
+            <div className="mt-4 space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <input type="text" placeholder="Card Number (16 digits)" value={cardDetails.number} onChange={e => setCardDetails({...cardDetails, number: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" maxLength={16} />
+              <input type="text" placeholder="Cardholder Name" value={cardDetails.name} onChange={e => setCardDetails({...cardDetails, name: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              <div className="flex gap-4">
+                <input type="text" placeholder="MM/YY" value={cardDetails.expiry} onChange={e => setCardDetails({...cardDetails, expiry: e.target.value})} className="w-1/2 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" maxLength={5} />
+                <input type="text" placeholder="CVV" value={cardDetails.cvv} onChange={e => setCardDetails({...cardDetails, cvv: e.target.value})} className="w-1/2 rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" maxLength={4} />
+              </div>
+            </div>
+          )}
           <button disabled={paying} onClick={handlePayment} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-bold text-white hover:bg-emerald-700 disabled:opacity-60"><CreditCard className="h-4 w-4" />{paying ? 'Processing payment…' : 'Pay and confirm appointment'}</button>
         </div>
       </div>}

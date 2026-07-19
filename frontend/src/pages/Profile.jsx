@@ -99,8 +99,10 @@ const Profile = ({ title = 'Profile Management' }) => {
       // reloading window is standard, but if we don't want refresh, we can dispatch a custom event and update AuthContext.
       window.dispatchEvent(new Event('auth_updated'));
       
-      // Clear password field
+      // Clear password field and file selections
       setFormData({ ...formData, password: '', profile_image_url: imageUrl });
+      setSelectedFile(null);
+      setPreviewImage(null);
       
     } catch (error) {
       toast.error('Failed to update profile');

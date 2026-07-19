@@ -24,6 +24,8 @@ const AppointmentsList = () => {
 
   useEffect(() => {
     fetchAppointments();
+    const interval = setInterval(fetchAppointments, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchAppointments = async () => {

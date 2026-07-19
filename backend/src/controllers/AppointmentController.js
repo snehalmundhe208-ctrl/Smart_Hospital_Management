@@ -34,7 +34,7 @@ const getAppointments = async (req, res) => {
 
     // Filter by role
     if (req.user.role === 'DOCTOR') {
-      query += ` WHERE d.user_id = $1 AND a.status IN ('CONFIRMED', 'CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED')`;
+      query += ` WHERE d.user_id = $1`;
       params.push(req.user.id);
     } else if (req.user.role === 'PATIENT') {
       query += ` WHERE p.user_id = $1`;

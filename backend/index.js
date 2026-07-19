@@ -51,8 +51,27 @@ app.use('/api/departments', DepartmentRoutes);
 app.use('/api/upload', UploadRoutes);
 app.use('/api/refunds', RefundRoutes);
 
+// Global Error Handlers
+process.on('uncaughtException', (err) => {
+  console.error('FATAL ERROR: Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('FATAL ERROR: Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// Verify critical environment variables
+if (!process.env.DATABASE_URL) {
+  console.error('FATAL ERROR: DATABASE_URL environment variable is missing.');
+  process.exit(1);
+}
+
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'production') {
+
+// Start server if run directly (e.g., node index.js on Render) or not in production
+if (require.main === module || process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

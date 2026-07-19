@@ -33,7 +33,6 @@ const Login = () => {
     setPassword('Password123!');
   };
 
-  const isDev = import.meta.env.DEV;
 
   return (
     <div className="min-h-screen flex bg-white font-sans text-slate-800">
@@ -145,7 +144,7 @@ const Login = () => {
             </motion.button>
           </form>
 
-          {isDev && (
+          {import.meta.env.DEV && (
             <div className="mt-8 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
               <button 
                 type="button"

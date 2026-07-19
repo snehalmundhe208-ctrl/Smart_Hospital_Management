@@ -61,9 +61,10 @@ const getDashboardStats = async (req, res) => {
       
       const highestPayingOrders = await db.query(`
         SELECT 
-          o.id, p.first_name, p.last_name, o.total_amount, o.payment_status, o.created_at
+          o.id, u.first_name, u.last_name, o.total_amount, o.payment_status, o.created_at
         FROM medicine_orders o
         JOIN patients p ON o.patient_id = p.id
+        JOIN users u ON p.user_id = u.id
         ORDER BY o.total_amount DESC LIMIT 5
       `);
 
